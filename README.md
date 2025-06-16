@@ -3,11 +3,12 @@
 [![Nuget](https://img.shields.io/nuget/v/Fiscalapi.XmlDownloader)](https://www.nuget.org/packages/Fiscalapi.XmlDownloader)
 [![License](https://img.shields.io/github/license/FiscalAPI/xml-downloader)](https://github.com/FiscalAPI/xml-downloader/blob/main/LICENSE.txt) 
 
-# ⚠️ **Librería en actualización**
+## ⚠️ **Librería en version beta**
 
-> Esta librería se encuentra actualmente en proceso de actualización.  
-> Muy pronto estará disponible con mejoras importantes.  
-> **Te recomendamos volver a consultar próximamente.**
+- Se liberó la version 5.X.X-beta, su predecesora es la 4.X.X, significa que la version rompe la compatibilidad hacia atrás.
+- Los servicios del SAT están degradados, por lo cual hace falta testing adicional y esto será completado apenas se reestablezcan los ws del SAT.
+- Se actualizará la documentación ASAP.
+
 
 ## Descripción
 Librería .NET para consultar y descargar facturas (CFDI) emitidas y recibidas a través del servicio web del SAT, incluyendo la obtención de metadata. Este servicio es parte del sistema "Consulta y recuperación de comprobantes" del SAT ([documentación oficial](https://www.sat.gob.mx/consultas/42968/consulta-y-recuperacion-de-comprobantes-(nuevo))).
