@@ -17,7 +17,7 @@
 using System.Net;
 using System.Text;
 
-namespace XmlDownloader.Common.Http;
+namespace Fiscalapi.XmlDownloader.Common.Http;
 
 /// <summary>
 /// Abstract base HTTP client for sending soap requests.

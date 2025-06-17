@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Enums;
+using Fiscalapi.XmlDownloader.Common.Enums;
 
-namespace XmlDownloader.Common.Http;
+namespace Fiscalapi.XmlDownloader.Common.Http;
 
 /// <summary>
 /// Base response class containing common properties for all SAT web service responses

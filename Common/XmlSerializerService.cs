@@ -16,7 +16,7 @@
 
 using System.Xml.Serialization;
 
-namespace XmlDownloader.Common;
+namespace Fiscalapi.XmlDownloader.Common;
 
 /// <summary>
 /// Service for serializing and deserializing XML data.

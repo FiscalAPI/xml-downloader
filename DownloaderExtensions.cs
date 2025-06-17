@@ -14,20 +14,20 @@
  * ============================================================================
  */
 
-using System.Text;
-using System.Xml.Linq;
-using System.Xml;
-using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using XmlDownloader.Auth;
-using XmlDownloader.Download;
-using XmlDownloader.Query;
-using XmlDownloader.Verify;
 using System.Collections.Concurrent;
-using XmlDownloader.FileStorage;
-using XmlDownloader.Common.Attributes;
+using System.Reflection;
+using System.Text;
+using System.Xml;
+using System.Xml.Linq;
+using Fiscalapi.XmlDownloader.Auth;
+using Fiscalapi.XmlDownloader.Common.Attributes;
+using Fiscalapi.XmlDownloader.Download;
+using Fiscalapi.XmlDownloader.FileStorage;
+using Fiscalapi.XmlDownloader.Query;
+using Fiscalapi.XmlDownloader.Verify;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace XmlDownloader;
+namespace Fiscalapi.XmlDownloader;
 
 public static class DownloaderExtensions
 {

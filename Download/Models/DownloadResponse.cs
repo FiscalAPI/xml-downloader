@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Common.Http;
 
-namespace XmlDownloader.Download.Models;
+namespace Fiscalapi.XmlDownloader.Download.Models;
 
 /// <summary>
 /// Response from package download service

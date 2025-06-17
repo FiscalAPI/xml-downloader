@@ -16,7 +16,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace XmlDownloader.FileStorage;
+namespace Fiscalapi.XmlDownloader.FileStorage;
 
 /// <summary>
 /// Configuration settings for file management operations

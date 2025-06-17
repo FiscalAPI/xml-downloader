@@ -16,7 +16,7 @@
 
 using System.Net;
 
-namespace XmlDownloader.Common.Http;
+namespace Fiscalapi.XmlDownloader.Common.Http;
 
 /// <summary>
 /// Raw SAT Response

@@ -16,12 +16,12 @@
 
 using Fiscalapi.Credentials.Common;
 using Fiscalapi.Credentials.Core;
-using XmlDownloader.Auth.Models;
-using XmlDownloader.Common;
-using XmlDownloader.Common.Http;
-using XmlDownloader.Verify.Models;
+using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Verify.Models;
 
-namespace XmlDownloader.Verify;
+namespace Fiscalapi.XmlDownloader.Verify;
 
 /// <summary>
 /// Service for verifying download requests with SAT.

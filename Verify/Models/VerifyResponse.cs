@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Common.Http;
 
-namespace XmlDownloader.Verify.Models;
+namespace Fiscalapi.XmlDownloader.Verify.Models;
 
 /// <summary>
 /// Response from request verification service

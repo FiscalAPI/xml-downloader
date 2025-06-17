@@ -16,7 +16,7 @@
 
 using System.Xml.Serialization;
 
-namespace XmlDownloader.Auth.Models.Sat;
+namespace Fiscalapi.XmlDownloader.Auth.Models.Sat;
 
 public class AuthAutenticaResponse
 {

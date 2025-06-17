@@ -14,13 +14,13 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common;
-using XmlDownloader.Common.Enums;
-using XmlDownloader.Common.Http;
-using XmlDownloader.Query.Models;
-using XmlDownloader.Query.Models.Sat;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Enums;
+using Fiscalapi.XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Query.Models;
+using Fiscalapi.XmlDownloader.Query.Models.Sat;
 
-namespace XmlDownloader.Query;
+namespace Fiscalapi.XmlDownloader.Query;
 
 public static class QueryResponseService
 {

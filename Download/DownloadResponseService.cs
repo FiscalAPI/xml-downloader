@@ -14,13 +14,13 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common;
-using XmlDownloader.Common.Enums;
-using XmlDownloader.Common.Http;
-using XmlDownloader.Download.Models;
-using XmlDownloader.Download.Models.Sat;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Enums;
+using Fiscalapi.XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Download.Models;
+using Fiscalapi.XmlDownloader.Download.Models.Sat;
 
-namespace XmlDownloader.Download;
+namespace Fiscalapi.XmlDownloader.Download;
 
 public static class DownloadResponseService
 {

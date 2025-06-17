@@ -15,9 +15,9 @@
  */
 
 using Fiscalapi.Credentials.Core;
-using XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Auth.Models;
 
-namespace XmlDownloader.Auth;
+namespace Fiscalapi.XmlDownloader.Auth;
 
 /// <summary>
 /// Interface for the SAT Authentication Service.

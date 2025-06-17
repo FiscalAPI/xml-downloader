@@ -16,12 +16,12 @@
 
 using Fiscalapi.Credentials.Common;
 using Fiscalapi.Credentials.Core;
-using XmlDownloader.Auth.Models;
-using XmlDownloader.Common;
-using XmlDownloader.Common.Http;
-using XmlDownloader.Query.Models;
+using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Query.Models;
 
-namespace XmlDownloader.Query;
+namespace Fiscalapi.XmlDownloader.Query;
 
 /// <summary>
 /// Service for creating download requests from the SAT.

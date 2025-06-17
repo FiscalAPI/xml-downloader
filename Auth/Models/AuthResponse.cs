@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Common.Http;
 
-namespace XmlDownloader.Auth.Models;
+namespace Fiscalapi.XmlDownloader.Auth.Models;
 
 /// <summary>
 /// Response from the authentication service

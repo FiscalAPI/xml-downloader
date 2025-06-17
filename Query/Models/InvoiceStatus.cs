@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Attributes;
+using Fiscalapi.XmlDownloader.Common.Attributes;
 
-namespace XmlDownloader.Query.Models;
+namespace Fiscalapi.XmlDownloader.Query.Models;
 
 public enum InvoiceStatus
 {

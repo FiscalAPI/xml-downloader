@@ -14,13 +14,13 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common;
-using XmlDownloader.Common.Enums;
-using XmlDownloader.Common.Http;
-using XmlDownloader.Verify.Models;
-using XmlDownloader.Verify.Models.Sat;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Enums;
+using Fiscalapi.XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Verify.Models;
+using Fiscalapi.XmlDownloader.Verify.Models.Sat;
 
-namespace XmlDownloader.Verify;
+namespace Fiscalapi.XmlDownloader.Verify;
 
 public static class VerifyResponseService
 {

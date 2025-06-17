@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Query.Models;
+namespace Fiscalapi.XmlDownloader.Query.Models;
 
 public class QueryParameters
 {

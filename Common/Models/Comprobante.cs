@@ -17,9 +17,9 @@
 
 using System.Reflection;
 using System.Xml.Serialization;
-using XmlDownloader.Common.Attributes;
+using Fiscalapi.XmlDownloader.Common.Attributes;
 
-namespace XmlDownloader.Common.Models;
+namespace Fiscalapi.XmlDownloader.Common.Models;
 
 [Serializable()]
 [XmlType(AnonymousType = true, Namespace = "http://www.sat.gob.mx/cfd/4")]

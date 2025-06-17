@@ -17,7 +17,7 @@
 
 using System.Xml.Serialization;
 
-namespace XmlDownloader.Common.Models.Complements.Payment;
+namespace Fiscalapi.XmlDownloader.Common.Models.Complements.Payment;
 
 /// <remarks/>
 [Serializable()]

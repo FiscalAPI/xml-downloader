@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Attributes;
+using Fiscalapi.XmlDownloader.Common.Attributes;
 
-namespace XmlDownloader.Verify.Models;
+namespace Fiscalapi.XmlDownloader.Verify.Models;
 
 /// <summary>
 /// Estado de la solicitud de descarga

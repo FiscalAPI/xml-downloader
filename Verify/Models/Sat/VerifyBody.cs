@@ -16,7 +16,7 @@
 
 using System.Xml.Serialization;
 
-namespace XmlDownloader.Verify.Models.Sat;
+namespace Fiscalapi.XmlDownloader.Verify.Models.Sat;
 
 /// <summary>
 /// SOAP Body containing the verification response

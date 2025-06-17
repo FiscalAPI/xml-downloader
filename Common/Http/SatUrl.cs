@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Common.Http;
+namespace Fiscalapi.XmlDownloader.Common.Http;
 
 /// <summary>
 /// Sat web services urls and it's actions

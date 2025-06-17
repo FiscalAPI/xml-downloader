@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Common.Http;
 
-namespace XmlDownloader.Query.Models;
+namespace Fiscalapi.XmlDownloader.Query.Models;
 
 /// <summary>
 /// Response from download request operations (Emitidos, Recibidos, Folio)

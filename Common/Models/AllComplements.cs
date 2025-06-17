@@ -14,11 +14,11 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Attributes;
-using XmlDownloader.Common.Models.Complements.Payment;
-using XmlDownloader.Common.Models.Complements.Signature;
+using Fiscalapi.XmlDownloader.Common.Attributes;
+using Fiscalapi.XmlDownloader.Common.Models.Complements.Payment;
+using Fiscalapi.XmlDownloader.Common.Models.Complements.Signature;
 
-namespace XmlDownloader.Common.Models;
+namespace Fiscalapi.XmlDownloader.Common.Models;
 
 public class AllComplements
 {

@@ -19,8 +19,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-
-namespace XmlDownloader.FileStorage;
+namespace Fiscalapi.XmlDownloader.FileStorage;
 
 /// <summary>
 /// Local file system implementation

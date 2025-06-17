@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Auth.Models;
+namespace Fiscalapi.XmlDownloader.Auth.Models;
 
 public class Token
 {

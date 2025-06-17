@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.FileStorage;
+namespace Fiscalapi.XmlDownloader.FileStorage;
 
 /// <summary>
 /// Interface for cross-platform file system operations

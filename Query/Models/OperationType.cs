@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Query.Models;
+namespace Fiscalapi.XmlDownloader.Query.Models;
 
 /// <summary>
 /// Enum for identifying operation types in query service.

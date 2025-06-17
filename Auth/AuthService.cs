@@ -16,11 +16,11 @@
 
 using Fiscalapi.Credentials.Common;
 using Fiscalapi.Credentials.Core;
-using XmlDownloader.Auth.Models;
-using XmlDownloader.Common;
-using XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Http;
 
-namespace XmlDownloader.Auth;
+namespace Fiscalapi.XmlDownloader.Auth;
 
 /// <summary>
 /// SAT Authentication Service.

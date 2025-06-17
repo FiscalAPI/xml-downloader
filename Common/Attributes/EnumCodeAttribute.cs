@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Common.Attributes;
+namespace Fiscalapi.XmlDownloader.Common.Attributes;
 
 [AttributeUsage(AttributeTargets.Field)]
 public class EnumCodeAttribute(string code) : Attribute

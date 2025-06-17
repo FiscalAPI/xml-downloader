@@ -16,7 +16,7 @@
 
 using System.Xml.Serialization;
 
-namespace XmlDownloader.Query.Models.Sat;
+namespace Fiscalapi.XmlDownloader.Query.Models.Sat;
 
 public class QueryBody
 {

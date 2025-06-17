@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.FileStorage;
+namespace Fiscalapi.XmlDownloader.FileStorage;
 
 /// <summary>
 /// Represents a file with its basic information

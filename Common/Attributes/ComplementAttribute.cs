@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Common.Attributes;
+namespace Fiscalapi.XmlDownloader.Common.Attributes;
 
 [AttributeUsage(AttributeTargets.Property)]
 public class ComplementAttribute(string prefix) : Attribute

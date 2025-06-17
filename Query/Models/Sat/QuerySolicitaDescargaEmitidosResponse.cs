@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Query.Models.Sat;
+namespace Fiscalapi.XmlDownloader.Query.Models.Sat;
 
 public class QuerySolicitaDescargaEmitidosResponse
 {

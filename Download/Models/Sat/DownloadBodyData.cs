@@ -16,7 +16,7 @@
 
 using System.Xml.Serialization;
 
-namespace XmlDownloader.Download.Models.Sat;
+namespace Fiscalapi.XmlDownloader.Download.Models.Sat;
 
 public class DownloadBodyData
 {

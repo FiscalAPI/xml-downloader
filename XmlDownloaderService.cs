@@ -17,21 +17,21 @@
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using Fiscalapi.Credentials.Core;
+using Fiscalapi.XmlDownloader.Auth;
+using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Models;
+using Fiscalapi.XmlDownloader.Download;
+using Fiscalapi.XmlDownloader.Download.Models;
+using Fiscalapi.XmlDownloader.FileStorage;
+using Fiscalapi.XmlDownloader.Query;
+using Fiscalapi.XmlDownloader.Query.Models;
+using Fiscalapi.XmlDownloader.Verify;
+using Fiscalapi.XmlDownloader.Verify.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using XmlDownloader.Auth;
-using XmlDownloader.Auth.Models;
-using XmlDownloader.Common;
-using XmlDownloader.Common.Models;
-using XmlDownloader.Download;
-using XmlDownloader.Download.Models;
-using XmlDownloader.FileStorage;
-using XmlDownloader.Query;
-using XmlDownloader.Query.Models;
-using XmlDownloader.Verify;
-using XmlDownloader.Verify.Models;
 
-namespace XmlDownloader;
+namespace Fiscalapi.XmlDownloader;
 
 public class XmlDownloaderService : IXmlDownloaderService
 {

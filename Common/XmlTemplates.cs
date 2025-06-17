@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Common;
+namespace Fiscalapi.XmlDownloader.Common;
 
 /// <summary>
 /// XML envelope building blocks used for SAT web services.

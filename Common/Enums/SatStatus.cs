@@ -14,9 +14,9 @@
  * ============================================================================
  */
 
-using XmlDownloader.Common.Attributes;
+using Fiscalapi.XmlDownloader.Common.Attributes;
 
-namespace XmlDownloader.Common.Enums;
+namespace Fiscalapi.XmlDownloader.Common.Enums;
 
 /// <summary>
 /// Mensajes recibidos desde todas las operaciones del Servicio de Descarga Masiva

@@ -15,7 +15,7 @@
  */
 
 
-namespace XmlDownloader.Common.Models;
+namespace Fiscalapi.XmlDownloader.Common.Models;
 
 
 /// <remarks/>

@@ -15,13 +15,13 @@
  */
 
 using Fiscalapi.Credentials.Core;
-using XmlDownloader.Auth.Models;
-using XmlDownloader.Auth.Models.Sat;
-using XmlDownloader.Common;
-using XmlDownloader.Common.Enums;
-using XmlDownloader.Common.Http;
+using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Auth.Models.Sat;
+using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Enums;
+using Fiscalapi.XmlDownloader.Common.Http;
 
-namespace XmlDownloader.Auth;
+namespace Fiscalapi.XmlDownloader.Auth;
 
 public static class AuthResponseService
 {

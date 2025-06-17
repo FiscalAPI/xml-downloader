@@ -16,7 +16,7 @@
 
 using System.Xml.Serialization;
 
-namespace XmlDownloader.Common.Models.Complements.Signature;
+namespace Fiscalapi.XmlDownloader.Common.Models.Complements.Signature;
 
 [Serializable()]
 [XmlType(AnonymousType = true, Namespace = "http://www.sat.gob.mx/TimbreFiscalDigital")]

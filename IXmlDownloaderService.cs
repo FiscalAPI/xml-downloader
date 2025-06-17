@@ -15,13 +15,13 @@
  */
 
 using Fiscalapi.Credentials.Core;
-using XmlDownloader.Auth.Models;
-using XmlDownloader.Common.Models;
-using XmlDownloader.Download.Models;
-using XmlDownloader.Query.Models;
-using XmlDownloader.Verify.Models;
+using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common.Models;
+using Fiscalapi.XmlDownloader.Download.Models;
+using Fiscalapi.XmlDownloader.Query.Models;
+using Fiscalapi.XmlDownloader.Verify.Models;
 
-namespace XmlDownloader;
+namespace Fiscalapi.XmlDownloader;
 
 public interface IXmlDownloaderService
 {

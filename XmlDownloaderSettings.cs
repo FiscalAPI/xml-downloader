@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader;
+namespace Fiscalapi.XmlDownloader;
 
 public class XmlDownloaderSettings
 {

@@ -14,7 +14,7 @@
  * ============================================================================
  */
 
-namespace XmlDownloader.Common;
+namespace Fiscalapi.XmlDownloader.Common;
 
 /// <summary>
 /// Placeholders used in XML templates for SAT web services.
