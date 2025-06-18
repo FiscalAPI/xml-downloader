@@ -26,7 +26,7 @@ public enum SatStatus
     /// <summary>
     /// Desconocido.
     /// </summary>
-    [EnumCode("000")] Unknown = 000,
+    [EnumCode("0")] Unknown = 0,
 
     /// <summary>
     /// Usuario No Válido
