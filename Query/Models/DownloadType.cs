@@ -19,9 +19,9 @@ namespace Fiscalapi.XmlDownloader.Query.Models;
 /// <summary>
 /// Enum for identifying operation types in query service.
 /// </summary>
-public enum OperationType
+public enum DownloadType
 {
-    RequestIssued,
-    RequestReceived,
-    RequestUuid
+    Emitidos, 
+    Recibidos,
+    Uuid
 }

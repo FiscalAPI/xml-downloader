@@ -59,7 +59,7 @@ public class QueryService : SatService, IQueryService
     /// <summary>
     /// Creates the digest
     /// </summary>
-    private string CreateDigest(QueryParameters parameters, OperationType operationType)
+    private string CreateDigest(QueryParameters parameters, DownloadType operationType)
     {
         var extraXml = string.Empty;
         var requestAttributes = BuildRequestAttributes(parameters, operationType, ref extraXml);
@@ -75,9 +75,9 @@ public class QueryService : SatService, IQueryService
 
         var digestTemplate = operationType switch
         {
-            OperationType.RequestIssued => XmlTemplates.EmitidosToDigest,
-            OperationType.RequestReceived => XmlTemplates.RecibidosToDigest,
-            OperationType.RequestUuid => XmlTemplates.FolioToDigest,
+            DownloadType.Emitidos => XmlTemplates.EmitidosToDigest,
+            DownloadType.Recibidos => XmlTemplates.RecibidosToDigest,
+            DownloadType.Uuid => XmlTemplates.FolioToDigest,
             _ => throw new InvalidOperationException($"Unsupported operation type: {operationType}")
         };
 
@@ -125,7 +125,7 @@ public class QueryService : SatService, IQueryService
     /// Builds the complete request envelope BuildEnvelope
     /// </summary>
     private string BuildEnvelope(QueryParameters parameters, string signature,
-        OperationType operationType)
+        DownloadType operationType)
     {
         var extraXml = string.Empty;
         var requestAttributes = BuildRequestAttributes(parameters, operationType, ref extraXml);
@@ -141,9 +141,9 @@ public class QueryService : SatService, IQueryService
 
         var nodeName = operationType switch
         {
-            OperationType.RequestIssued => "SolicitaDescargaEmitidos",
-            OperationType.RequestReceived => "SolicitaDescargaRecibidos",
-            OperationType.RequestUuid => "SolicitaDescargaFolio",
+            DownloadType.Emitidos => "SolicitaDescargaEmitidos",
+            DownloadType.Recibidos => "SolicitaDescargaRecibidos",
+            DownloadType.Uuid => "SolicitaDescargaFolio",
             _ => throw new InvalidOperationException($"Unsupported operation type: {operationType}")
         };
 
@@ -160,21 +160,21 @@ public class QueryService : SatService, IQueryService
     /// Builds request attributes
     /// </summary>
     private Dictionary<string, string> BuildRequestAttributes(QueryParameters parameters,
-        OperationType operationType, ref string extraXml)
+        DownloadType operationType, ref string extraXml)
     {
         var requestAttributes = new Dictionary<string, string>();
 
         switch (operationType)
         {
-            case OperationType.RequestIssued:
+            case DownloadType.Emitidos:
                 BuildEmitidosAttributes(parameters, requestAttributes, ref extraXml);
                 break;
 
-            case OperationType.RequestReceived:
+            case DownloadType.Recibidos:
                 BuildRecibidosAttributes(parameters, requestAttributes);
                 break;
 
-            case OperationType.RequestUuid:
+            case DownloadType.Uuid:
                 BuildFolioAttributes(parameters, requestAttributes);
                 break;
             default:
@@ -259,24 +259,24 @@ public class QueryService : SatService, IQueryService
             requestAttributes["RfcSolicitante"] = parameters.RequesterTin.ToUpperInvariant();
     }
 
-    private static string GetSoapActionByOperation(OperationType operationType)
+    private static string GetSoapActionByOperation(DownloadType operationType)
     {
         return operationType switch
         {
-            OperationType.RequestIssued => SatUrl.RequestIssuedAction,
-            OperationType.RequestReceived => SatUrl.RequestReceivedAction,
-            OperationType.RequestUuid => SatUrl.RequestUuidAction,
+            DownloadType.Emitidos => SatUrl.RequestIssuedAction,
+            DownloadType.Recibidos => SatUrl.RequestReceivedAction,
+            DownloadType.Uuid => SatUrl.RequestUuidAction,
             _ => throw new InvalidOperationException($"Unsupported operation type: {operationType}")
         };
     }
 
-    private static OperationType DetermineOperationType(QueryParameters parameters)
+    private static DownloadType DetermineOperationType(QueryParameters parameters)
     {
         if (!string.IsNullOrEmpty(parameters.InvoiceUuid))
-            return OperationType.RequestUuid;
+            return DownloadType.Uuid;
 
         return !string.IsNullOrEmpty(parameters.IssuerTin)
-            ? OperationType.RequestIssued
-            : OperationType.RequestReceived;
+            ? DownloadType.Emitidos
+            : DownloadType.Recibidos;
     }
 }
