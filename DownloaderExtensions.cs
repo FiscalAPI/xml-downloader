@@ -169,16 +169,8 @@ public static class DownloaderExtensions
     /// <param name="services">The service collection</param>
     /// <param name="storageSettings">File storage settings</param>
     /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddXmlDownloader(this IServiceCollection services,
-        Action<FileStorageSettings>? storageSettings = null)
+    public static IServiceCollection AddXmlDownloader(this IServiceCollection services)
     {
-        // File storage settings
-        if (storageSettings is not null)
-            services.Configure(storageSettings);
-        else
-            services.Configure<FileStorageSettings>(settings => { settings.InitializeDefaultDirectories(); });
-
-
         // Register the services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IQueryService, QueryService>();

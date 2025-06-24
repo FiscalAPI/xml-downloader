@@ -17,91 +17,91 @@
 namespace Fiscalapi.XmlDownloader.FileStorage;
 
 /// <summary>
-/// Interface for cross-platform file system operations
-/// Designed to support multiple implementations like local file system, cloud storage, etc.
+/// Interface for file system operations.
 /// </summary>
 public interface IFileStorageService
 {
     /// <summary>
-    /// Check if a file exists at the specified path
-    /// </summary>
-    bool FileExists(string filePath);
-
-    /// <summary>
     /// Check if a directory exists at the specified path
     /// </summary>
+    /// <param name="directoryPath">Full path to the directory</param>
+    /// <returns>True if directory exists</returns>
     bool DirectoryExists(string directoryPath);
 
     /// <summary>
     /// Delete all files and folders recursively from the specified directory
     /// </summary>
-    Task CleanDirectoryAsync(string directoryPath, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Extract a ZIP file to the specified destination path or default directory if not specified
-    /// </summary>
-    /// <param name="zipFilePath">Package .zip path</param>
-    /// <param name="extractToPath">Path to write unzip files</param>
-    /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>Completion Task</returns>
-    Task ExtractZipFileAsync(string zipFilePath, string? extractToPath = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Ensure required directories exist based on configuration settings
-    /// </summary>
-    Task EnsureDirectoriesAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get a list of files from the specified directory with optional file extension filter
-    /// </summary>
-    Task<List<FileDetails>> GetFilesAsync(string directoryPath, string? fileExtension = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Write binary data to a file
-    /// </summary>
-    Task WriteFileAsync(string filePath, byte[] data, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Write base64 encoded data to a file
-    /// </summary>
-    Task WriteFileAsync(string filePath, string base64Data, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Read file content as byte array
-    /// </summary>
-    Task<byte[]> ReadFileAsync(string filePath, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Read file content as string
-    /// </summary>
-    Task<string> ReadFileContentAsync(string filePath, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Copy a file from source to destination
-    /// </summary>
-    Task<bool> CopyFileAsync(string sourceFilePath, string destinationFilePath, bool overwrite = false,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Move a file from source to destination
-    /// </summary>
-    Task<bool> MoveFileAsync(string sourceFilePath, string destinationFilePath,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Delete a file
-    /// </summary>
-    Task<bool> DeleteFileAsync(string filePath, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get file size in bytes
-    /// </summary>
-    Task<long> GetFileSizeAsync(string filePath, CancellationToken cancellationToken = default);
+    /// <param name="directoryPath">Full path to the directory to clean</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    void CleanDirectory(string directoryPath, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create a directory if it doesn't exist
     /// </summary>
-    Task CreateDirectoryAsync(string directoryPath, CancellationToken cancellationToken = default);
+    /// <param name="directoryPath">Full path to the directory to create</param>
+    void CreateDirectoryIfNotExist(string directoryPath);
+
+    /// <summary>
+    /// Check if a file exists at the specified path
+    /// </summary>
+    /// <param name="fullFilePath">Full path to the file</param>
+    /// <returns>True if file exists</returns>
+    bool FileExists(string fullFilePath);
+
+    /// <summary>
+    /// Extract a ZIP file to the specified destination path
+    /// </summary>
+    /// <param name="fullFilePath">Full path to the ZIP file</param>
+    /// <param name="extractToPath">Path to extract files to</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Completion Task</returns>
+    void ExtractZipFile(string fullFilePath, string extractToPath,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get a list of files from the specified directory with optional file extension filter
+    /// </summary>
+    /// <param name="directoryPath">Full path to the directory</param>
+    /// <param name="fileExtension">File extension filter (optional)</param>
+    /// <returns>List of file details</returns>
+    List<FileDetails> GetFiles(string directoryPath, string? fileExtension = null);
+
+    /// <summary>
+    /// Write binary data to a file
+    /// </summary>
+    /// <param name="fullFilePath">Full path to the file</param>
+    /// <param name="data">Binary data to write</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task WriteFileAsync(string fullFilePath, byte[] data, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Write base64 encoded data to a file
+    /// </summary>
+    /// <param name="fullFilePath">Full path to the file</param>
+    /// <param name="base64Data">Base64 encoded data to write</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task WriteFileAsync(string fullFilePath, string base64Data, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Read file content as byte array
+    /// </summary>
+    /// <param name="fullFilePath">Full path to the file</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>File content as byte array</returns>
+    Task<byte[]> ReadFileAsync(string fullFilePath, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Read file content as string
+    /// </summary>
+    /// <param name="fullFilePath">Full path to the file</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>File content as string</returns>
+    Task<string> ReadFileContentAsync(string fullFilePath, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete a file
+    /// </summary>
+    /// <param name="fullFilePath">Full path to the file</param>
+    /// <returns>True if file was deleted successfully</returns>
+    void DeleteFile(string fullFilePath);
 }

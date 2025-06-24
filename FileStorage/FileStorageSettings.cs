@@ -14,64 +14,22 @@
  * ============================================================================
  */
 
-using System.Runtime.InteropServices;
-
 namespace Fiscalapi.XmlDownloader.FileStorage;
 
-/// <summary>
-/// Configuration settings for file management operations
-/// </summary>
-public class FileStorageSettings
+public static class FileStorageSettings
 {
     /// <summary>
     /// Package file extension
     /// </summary>
-    public string PackageExtension { get; set; } = ".zip";
+    public static string PackageExtension { get; set; } = ".zip";
 
     /// <summary>
-    /// XML file extension for CFDI documents
+    /// CFDI file extension
     /// </summary>
-    public string CfdiExtension { get; set; } = ".xml";
+    public static string CfdiExtension { get; set; } = ".xml";
 
     /// <summary>
     /// Metadata file extension
     /// </summary>
-    public string MetadataExtension { get; set; } = ".txt";
-
-    /// <summary>
-    /// Folder to perform temporary operations like folder extractions
-    /// </summary>
-    public string TempDirectory { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Folder where packages will be saved
-    /// </summary>
-    public string PackagesDirectory { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Initialize default directories based on current operating system 
-    /// </summary>
-    public void InitializeDefaultDirectories()
-    {
-        if (string.IsNullOrEmpty(TempDirectory))
-        {
-            //Windows: C:\Users\[Username]\AppData\Local\Fiscalapi\Temp
-            //Linux  : /home/[username]/.fiscalapi/temp
-            TempDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Fiscalapi",
-                    "Temp")
-                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".fiscalapi", "temp");
-        }
-
-        if (string.IsNullOrEmpty(PackagesDirectory))
-        {
-            //Windows: C:\Users\[Username]\AppData\Local\Fiscalapi\Packages
-            //Linux  : /home/[username]/.fiscalapi/packages
-            PackagesDirectory = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Fiscalapi",
-                    "Packages")
-                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".fiscalapi",
-                    "packages");
-        }
-    }
+    public static string MetaExtension { get; set; } = ".txt";
 }

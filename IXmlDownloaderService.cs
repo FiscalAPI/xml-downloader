@@ -89,39 +89,40 @@ public interface IXmlDownloaderService
     /// <summary>
     /// Writes the downloaded package bytes to a file at the specified path.
     /// </summary>
-    /// <param name="path">Disk path where package will be written</param>
+    /// <param name="fullFilePath">Disk path where package will be written</param>
     /// <param name="bytes">Package data in bytes</param>
     /// <param name="cancellationToken">cancellationToken</param>
     /// <returns>Completed Task</returns>
-    Task WritePackageAsync(string path, byte[] bytes, CancellationToken cancellationToken = default);
+    Task WritePackageAsync(string fullFilePath, byte[] bytes, CancellationToken cancellationToken = default);
 
 
     /// <summary>
     /// Writes the downloaded package data to a file at the specified path.
     /// </summary>
-    /// <param name="path">Disk path where package will be written</param>
+    /// <param name="fullFilePath">Disk path where package will be written</param>
     /// <param name="base64Package">Package data in base 64</param>
     /// <param name="cancellationToken">cancellationToken</param>
     /// <returns>Completed Task</returns>
-    Task WritePackageAsync(string path, string base64Package, CancellationToken cancellationToken = default);
+    Task WritePackageAsync(string fullFilePath, string base64Package, CancellationToken cancellationToken = default);
 
 
     /// <summary>
     /// Reads a file from the disk at the specified path and returns its content as a byte array.
     /// </summary>
-    /// <param name="filePath">File path</param>
+    /// <param name="fullFilePath">File path</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns>data in bytes</returns>
-    Task<byte[]> ReadFileAsync(string filePath, CancellationToken cancellationToken = default);
+    Task<byte[]> ReadFileAsync(string fullFilePath, CancellationToken cancellationToken = default);
 
 
     /// <summary>
     /// Retrieves a list of Comprobantes from a package represented by its extracted directory path.
     /// </summary>
-    /// <param name="zipFilePath">Package .zip file path</param>
+    /// <param name="fullZipFilePath">Package .zip file path</param>
+    /// <param name="extractToPath"></param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns>List of Comprobantes objects</returns>
-    IAsyncEnumerable<Comprobante> GetComprobantesAsync(string zipFilePath,
+    IAsyncEnumerable<Comprobante> GetComprobantesAsync(string fullZipFilePath, string extractToPath,
         CancellationToken cancellationToken = default);
 
     /// <summary>

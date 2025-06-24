@@ -29,7 +29,6 @@ using Fiscalapi.XmlDownloader.Query.Models;
 using Fiscalapi.XmlDownloader.Verify;
 using Fiscalapi.XmlDownloader.Verify.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Fiscalapi.XmlDownloader;
 
@@ -40,21 +39,27 @@ public class XmlDownloaderService : IXmlDownloaderService
     public ICredential? Credential { get; set; }
 
     private readonly ILogger<XmlDownloaderService> _logger;
-    private readonly FileStorageSettings _settings;
     private readonly IAuthService _authService;
     private readonly IQueryService _queryService;
     private readonly IVerifyService _verifyService;
     private readonly IDownloadService _downloadService;
     private readonly IFileStorageService _storageService;
 
-    // Default constructor for dependency injection
+    /// <summary>
+    /// Default constructor for dependency injection
+    /// </summary>
+    /// <param name="authService">Authentication service</param>
+    /// <param name="queryService">Query service</param>
+    /// <param name="verifyService">Verify service</param>
+    /// <param name="downloadService">Download service</param>
+    /// <param name="storageService">File storage service</param>
+    /// <param name="logger">Logger</param>
     public XmlDownloaderService(
         IAuthService authService,
         IQueryService queryService,
         IVerifyService verifyService,
         IDownloadService downloadService,
         IFileStorageService storageService,
-        IOptions<FileStorageSettings> options,
         ILogger<XmlDownloaderService> logger
     )
     {
@@ -63,11 +68,12 @@ public class XmlDownloaderService : IXmlDownloaderService
         _verifyService = verifyService;
         _downloadService = downloadService;
         _storageService = storageService;
-        _settings = options.Value;
         _logger = logger;
     }
 
-    // Default constructor no dependency injection 
+    /// <summary>
+    /// Default constructor no dependency injection 
+    /// </summary>
     public XmlDownloaderService()
     {
         _authService = new AuthService();
@@ -75,8 +81,6 @@ public class XmlDownloaderService : IXmlDownloaderService
         _verifyService = new VerifyService();
         _downloadService = new DownloadService();
         _storageService = new FileStorageService();
-        _settings = new FileStorageSettings();
-        _settings.InitializeDefaultDirectories();
 
         var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -86,7 +90,14 @@ public class XmlDownloaderService : IXmlDownloaderService
         _logger = loggerFactory.CreateLogger<XmlDownloaderService>();
     }
 
-
+    /// <summary>
+    /// Authenticate with a certificate and private key
+    /// </summary>
+    /// <param name="base64Cer">Base64 encoded certificate</param>
+    /// <param name="base64Key">Base64 encoded private key</param>
+    /// <param name="password">Plain text password for the private key</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A <see cref="AuthResponse"/> object containing the authentication token.</returns>
     public async Task<AuthResponse> AuthenticateAsync(string base64Cer, string base64Key, string password,
         CancellationToken cancellationToken = default)
     {
@@ -99,7 +110,13 @@ public class XmlDownloaderService : IXmlDownloaderService
         return await AuthenticateAsync(credential, cancellationToken);
     }
 
-
+    /// <summary>
+    /// Authenticate with a FiscalAPI credential.
+    /// See https://github.com/FiscalAPI/fiscalapi-credentials-net for more information.
+    /// </summary>
+    /// <param name="credential">Credential represent a FIEL certificate and private key</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A <see cref="AuthResponse"/> object containing the authentication token.</returns>
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
         CancellationToken cancellationToken = default)
     {
@@ -110,6 +127,12 @@ public class XmlDownloaderService : IXmlDownloaderService
         return authResponse;
     }
 
+    /// <summary>
+    /// Create a download request to the SAT using the given parameters.
+    /// </summary>
+    /// <param name="parameters">Query parameters</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A <see cref="QueryResponse"/> object containing the request ID.</returns>
     public async Task<QueryResponse> CreateRequestAsync(QueryParameters parameters,
         CancellationToken cancellationToken = default)
     {
@@ -123,6 +146,12 @@ public class XmlDownloaderService : IXmlDownloaderService
         );
     }
 
+    /// <summary>
+    /// Verify a download request using the given request ID.
+    /// </summary>
+    /// <param name="requestId">Request ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A <see cref="VerifyResponse"/> object containing the package ID.</returns>
     public Task<VerifyResponse> VerifyAsync(string requestId, CancellationToken cancellationToken = default)
     {
         EnsureAuthToken();
@@ -135,6 +164,12 @@ public class XmlDownloaderService : IXmlDownloaderService
         );
     }
 
+    /// <summary>
+    /// Download a package from the SAT using the given package ID resolved from a verify request.
+    /// </summary>
+    /// <param name="packageId">Package ID resolved from a verify request</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A <see cref="DownloadResponse"/> object containing the package data.</returns>
     public Task<DownloadResponse> DownloadAsync(string packageId, CancellationToken cancellationToken = default)
     {
         EnsureAuthToken();
@@ -147,50 +182,72 @@ public class XmlDownloaderService : IXmlDownloaderService
         );
     }
 
-    public async Task WritePackageAsync(string path, byte[] bytes, CancellationToken cancellationToken = default)
-    {
-        await _storageService.WriteFileAsync(path, bytes, cancellationToken);
-    }
-
-    public async Task WritePackageAsync(string path, string base64Package,
+    /// <summary>
+    /// Writes a package .zip file to the specified file path.
+    /// </summary>
+    /// <param name="fullFilePath">Full path including directory and file name and extension</param>
+    /// <param name="bytes">Package bytes</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task WritePackageAsync(string fullFilePath, byte[] bytes,
         CancellationToken cancellationToken = default)
     {
-        await _storageService.WriteFileAsync(path, base64Package, cancellationToken);
+        await _storageService.WriteFileAsync(fullFilePath, bytes, cancellationToken);
     }
 
-    public async Task<byte[]> ReadFileAsync(string filePath, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Writes a package .zip file to the specified file path.
+    /// The package is a .zip file containing the CFDIs.
+    /// </summary>
+    /// <param name="fullFilePath">Full path including directory and file name and extension</param>
+    /// <param name="base64Package">Base64 encoded package</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task WritePackageAsync(string fullFilePath, string base64Package,
+        CancellationToken cancellationToken = default)
+    {
+        await _storageService.WriteFileAsync(fullFilePath, base64Package, cancellationToken);
+    }
+
+    /// <summary>
+    /// Reads a file from the specified file path.
+    /// </summary>
+    /// <param name="fullFilePath">File path</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>File content in bytes</returns>
+    public async Task<byte[]> ReadFileAsync(string fullFilePath, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        return await _storageService.ReadFileAsync(filePath, cancellationToken);
+        return await _storageService.ReadFileAsync(fullFilePath, cancellationToken);
     }
 
-
-    public async IAsyncEnumerable<Comprobante> GetComprobantesAsync(string zipFilePath,
+    /// <summary>
+    /// Retrieves a list of Comprobantes from a package represented by its extracted directory path.
+    /// </summary>
+    /// <param name="fullFilePath">Package .zip file path</param>
+    /// <param name="extractToPath"></param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{Comprobante}"/> of <see cref="Comprobante"/> objects.</returns>
+    public async IAsyncEnumerable<Comprobante> GetComprobantesAsync(string fullFilePath, string extractToPath,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         //Unzip the package to a default directory
-        await _storageService.ExtractZipFileAsync(
-            zipFilePath: zipFilePath,
-            extractToPath: _settings.TempDirectory,
+        _storageService.ExtractZipFile(
+            fullFilePath: fullFilePath,
+            extractToPath: extractToPath,
             cancellationToken: cancellationToken
         );
 
         //Load file details 
-        var files = await _storageService.GetFilesAsync(
-            _settings.TempDirectory,
-            _settings.CfdiExtension,
-            cancellationToken);
+        var files = _storageService.GetFiles(extractToPath, FileStorageSettings.CfdiExtension);
 
         //Serialize each XML file to Comprobante object
         foreach (var file in files)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-
             var xml = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken);
-
-
             var comprobante = XmlSerializerService.Deserialize<Comprobante>(xml);
 
             if (comprobante is not null)
@@ -198,6 +255,12 @@ public class XmlDownloaderService : IXmlDownloaderService
         }
     }
 
+    /// <summary>
+    /// Retrieves a list of Comprobantes from a package represented by its byte array.
+    /// </summary>
+    /// <param name="packageBytes">Package Bytes</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{Comprobante}"/> of <see cref="Comprobante"/> objects.</returns>
     public async IAsyncEnumerable<Comprobante> GetComprobantesAsync(byte[] packageBytes,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -209,7 +272,7 @@ public class XmlDownloaderService : IXmlDownloaderService
             cancellationToken.ThrowIfCancellationRequested();
 
             //verify if the entry is an XML file
-            if (!entry.Name.EndsWith(_settings.CfdiExtension, StringComparison.OrdinalIgnoreCase))
+            if (!entry.Name.EndsWith(FileStorageSettings.CfdiExtension, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             // Read the entry stream
@@ -226,6 +289,12 @@ public class XmlDownloaderService : IXmlDownloaderService
         }
     }
 
+    /// <summary>
+    /// Retrieves a list of Comprobantes from a package represented by its DownloadResponse.
+    /// </summary>
+    /// <param name="downloadResponse">DownloadResponse</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{Comprobante}"/> of <see cref="Comprobante"/> objects.</returns>
     public async IAsyncEnumerable<Comprobante> GetComprobantesAsync(DownloadResponse downloadResponse,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -247,7 +316,10 @@ public class XmlDownloaderService : IXmlDownloaderService
         }
     }
 
-
+    /// <summary>
+    /// Ensures that the authentication token and credential are not null.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when the authentication token or credential is null.</exception>
     private void EnsureAuthToken()
     {
         if (Token == null)
