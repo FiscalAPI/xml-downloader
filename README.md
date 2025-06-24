@@ -20,7 +20,7 @@ Librería .NET para consultar y descargar facturas (CFDI) emitidas y recibidas a
 
 ```bash
 # Package Manager
-Install-Package Fiscalapi.XmlDownloader
+NuGet\Install-Package Fiscalapi.XmlDownloader
 
 # .NET CLI
 dotnet add package Fiscalapi.XmlDownloader
