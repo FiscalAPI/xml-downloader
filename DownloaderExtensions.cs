@@ -167,7 +167,6 @@ public static class DownloaderExtensions
     /// Adds Xml downloader services to the dependency injection container
     /// </summary>
     /// <param name="services">The service collection</param>
-    /// <param name="storageSettings">File storage settings</param>
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddXmlDownloader(this IServiceCollection services)
     {
