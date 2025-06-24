@@ -6,7 +6,7 @@
 
 ## 📋 Descripción
 
-Librería .NET para consultar y descargar facturas (CFDI) emitidas y recibidas a través del servicio web del SAT, incluyendo la obtención de metadata. Este servicio es parte del sistema "Consulta y recuperación de comprobantes" del SAT.
+Librería .NET para consultar y descargar facturas (CFDI) emitidas y recibidas a través del servicio web del SAT, incluyendo la obtención de metadata. Este servicio es parte del sistema "Consulta y recuperación de comprobantes" del SAT. Este paquete depende [Fiscalapi.Credentials](https://github.com/FiscalAPI/fiscalapi-credentials-net). Se recomienda leer su documentación antes de continuar.
 
 ## 🎯 Casos de Uso
 
@@ -26,7 +26,6 @@ Install-Package Fiscalapi.XmlDownloader
 dotnet add package Fiscalapi.XmlDownloader
 ```
 
-> **📌 Dependencia requerida:** Esta librería depende de `Fiscalapi.Credentials`. Se recomienda leer su documentación antes de continuar.
 
 ## 🔄 Flujo de Operación
 
