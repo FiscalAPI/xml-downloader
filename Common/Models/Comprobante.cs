@@ -342,7 +342,11 @@ public class Comprobante
     public AllComplements AllComplements { get; set; } = new();
 
 
-
+    /// <summary>
+    /// Raw content in Base64 format.
+    /// </summary>
+    [XmlIgnore]
+    public string? Base64Content { get; set; }
 
     public void DeserializeComplements()
     {

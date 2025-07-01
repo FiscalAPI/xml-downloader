@@ -20,6 +20,7 @@ using Fiscalapi.XmlDownloader.Common.Models;
 using Fiscalapi.XmlDownloader.Download.Models;
 using Fiscalapi.XmlDownloader.Query.Models;
 using Fiscalapi.XmlDownloader.Verify.Models;
+using System.Runtime.CompilerServices;
 
 namespace Fiscalapi.XmlDownloader;
 
@@ -141,5 +142,34 @@ public interface IXmlDownloaderService
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns>List of Comprobantes objects</returns>
     IAsyncEnumerable<Comprobante> GetComprobantesAsync(DownloadResponse downloadResponse,
+        CancellationToken cancellationToken = default);
+
+
+    /// <summary>
+    /// Retrieves a list of MetaItems from a package represented by its extracted directory path.
+    /// </summary>
+    /// <param name="fullFilePath">Package .zip file path</param>
+    /// <param name="extractToPath">Path where to extract the zip file</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
+    IAsyncEnumerable<MetaItem> GetMetadataAsync(string fullFilePath, string extractToPath,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a list of MetaItems from a package represented by its byte array.
+    /// </summary>
+    /// <param name="packageBytes">Package Bytes</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
+    IAsyncEnumerable<MetaItem> GetMetadataAsync(byte[] packageBytes,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves a list of MetaItems from a package represented by its DownloadResponse.
+    /// </summary>
+    /// <param name="downloadResponse">DownloadResponse</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
+    IAsyncEnumerable<MetaItem> GetMetadataAsync(DownloadResponse downloadResponse,
         CancellationToken cancellationToken = default);
 }

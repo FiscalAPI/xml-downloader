@@ -16,6 +16,7 @@
 
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
+using Fiscalapi.Credentials.Common;
 using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth;
 using Fiscalapi.XmlDownloader.Auth.Models;
@@ -197,7 +198,7 @@ public class XmlDownloaderService : IXmlDownloaderService
 
     /// <summary>
     /// Writes a package .zip file to the specified file path.
-    /// The package is a .zip file containing the CFDIs.
+    /// The package is a .zip file containing the CFDIs or Metadata (.txt) files.
     /// </summary>
     /// <param name="fullFilePath">Full path including directory and file name and extension</param>
     /// <param name="base64Package">Base64 encoded package</param>
@@ -250,8 +251,11 @@ public class XmlDownloaderService : IXmlDownloaderService
             var xml = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken);
             var comprobante = XmlSerializerService.Deserialize<Comprobante>(xml);
 
-            if (comprobante is not null)
-                yield return comprobante;
+            if (comprobante is null) continue;
+
+            comprobante.Base64Content = xml.EncodeToBase64();
+            comprobante.DeserializeComplements();
+            yield return comprobante;
         }
     }
 
@@ -284,6 +288,8 @@ public class XmlDownloaderService : IXmlDownloaderService
             var comprobante = XmlSerializerService.Deserialize<Comprobante>(xml);
 
             if (comprobante is null) continue;
+
+            comprobante.Base64Content = xml.EncodeToBase64();
             comprobante.DeserializeComplements();
             yield return comprobante;
         }
@@ -315,6 +321,129 @@ public class XmlDownloaderService : IXmlDownloaderService
             yield return comprobante;
         }
     }
+
+
+    /// <summary>
+    /// Retrieves a list of MetaItems from a package represented by its extracted directory path.
+    /// </summary>
+    /// <param name="fullFilePath">Package .zip file path</param>
+    /// <param name="extractToPath">Path where to extract the zip file</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
+    public async IAsyncEnumerable<MetaItem> GetMetadataAsync(string fullFilePath, string extractToPath,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        // Unzip the package to a default directory
+        _storageService.ExtractZipFile(
+            fullFilePath: fullFilePath,
+            extractToPath: extractToPath,
+            cancellationToken: cancellationToken
+        );
+
+        // Load file details - look for .txt files instead of XML
+        var files = _storageService.GetFiles(extractToPath, FileStorageSettings.MetaExtension);
+
+        // Process each TXT file to extract MetaItem objects
+        foreach (var file in files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var txtContent = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken);
+            var lines = txtContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Skip the header line (first line contains column names)
+            for (var i = 1; i < lines.Length; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                    continue;
+
+                var metaItem = MetaItem.CreateFromString(lines[i]);
+                metaItem.Base64Content = lines[i].EncodeToBase64();
+                yield return metaItem;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a list of MetaItems from a package represented by its byte array.
+    /// </summary>
+    /// <param name="packageBytes">Package Bytes</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
+    public async IAsyncEnumerable<MetaItem> GetMetadataAsync(byte[] packageBytes,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        using var memoryStream = new MemoryStream(packageBytes);
+        using var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
+
+        foreach (var entry in zipArchive.Entries)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Verify if the entry is a TXT file
+            if (!entry.Name.EndsWith(FileStorageSettings.MetaExtension, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // Read the entry stream
+            await using var entryStream = entry.Open();
+            using var reader = new StreamReader(entryStream);
+            var txtContent = await reader.ReadToEndAsync(cancellationToken);
+
+            var lines = txtContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Skip the header line (first line contains column names)
+            for (var i = 1; i < lines.Length; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                    continue;
+
+
+                var metaItem = MetaItem.CreateFromString(lines[i]);
+                metaItem.Base64Content = lines[i].EncodeToBase64();
+
+                yield return metaItem;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a list of MetaItems from a package represented by its DownloadResponse.
+    /// </summary>
+    /// <param name="downloadResponse">DownloadResponse</param>
+    /// <param name="cancellationToken">CancellationToken</param>
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
+    public async IAsyncEnumerable<MetaItem> GetMetadataAsync(DownloadResponse downloadResponse,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (downloadResponse is null)
+        {
+            throw new ArgumentNullException(nameof(downloadResponse), "Download response cannot be null.");
+        }
+
+        if (downloadResponse.PackageSize <= 0)
+        {
+            throw new ArgumentException("Package size must be greater than zero.",
+                nameof(downloadResponse.PackageSize));
+        }
+
+        if (downloadResponse.PackageBytes is null || downloadResponse.PackageBytes.Length == 0)
+        {
+            throw new ArgumentException("Package bytes cannot be null or empty.",
+                nameof(downloadResponse.PackageBytes));
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await foreach (var metaItem in GetMetadataAsync(downloadResponse.PackageBytes, cancellationToken))
+        {
+            yield return metaItem;
+        }
+    }
+
 
     /// <summary>
     /// Ensures that the authentication token and credential are not null.
