@@ -163,12 +163,17 @@ internal class Program
                         await service.WritePackageAsync(packagePath, downloadResponse.PackageBytes);
                         Console.WriteLine($"Paquete guardado en: {packagePath}");
                         
-                        // Procesar comprobantes del paquete
+                        // Procesar comprobantes del paquete CFDI
                         Console.WriteLine("Procesando comprobantes...");
                         await foreach (var comprobante in service.GetComprobantesAsync(downloadResponse.PackageBytes))
                         {
                             Console.WriteLine($"CFDI procesado - Serie: {comprobante.Serie}, Folio: {comprobante.Folio}");
                         }
+                          // Procesar items del paquete Metadata
+                          // await foreach (var item in service.GetMetadataAsync(downloadResponse.PackageBytes, CancellationToken.None))
+                          // {
+                          //   Console.WriteLine($"Procesando MetaItem Uuid:{item.InvoiceUuid} Amount: {item.Amount}   IsCancelled: {item.IsCancelled}");
+                          // }
                     }
                     else
                     {
