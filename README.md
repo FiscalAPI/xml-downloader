@@ -268,7 +268,7 @@ Antes de reportar un problema:
 - [x] Soporte para inyección de dependencias (.NET)
 
 ### 🚧 Próximas Funcionalidades
-- [ ] Descarga de metadata de CFDI  
+- [ ] Descarga de CFDI Retenciones  
 
 ## 🔗 Enlaces Útiles
 
