@@ -41,5 +41,5 @@ public class VerifyResponse : BaseResponse
     /// <summary>
     /// Indicates if the request is ready for download
     /// </summary>
-    public bool IsReadyToDownload => RequestStatus == RequestStatus.Terminada;
+    public bool IsReadyToDownload => RequestStatus == RequestStatus.Terminada && InvoiceCount > 0;
 }
