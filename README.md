@@ -284,4 +284,4 @@ Antes de reportar un problema:
 
 Copyright © **FISCAL API S DE R.L DE C.V.**
 
-Este proyecto está licenciado bajo la **Licencia MPL** (Mozilla Public License). Consulta el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está licenciado bajo la **Licencia MPL** (Mozilla Public License). Consulta el archivo [LICENSE](LICENSE.txt) para más detalles.
