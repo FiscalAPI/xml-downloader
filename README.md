@@ -1,7 +1,9 @@
 # 🧾 Fiscalapi XML Downloader (sat-ws-descarga-masiva)
 
-[![Nuget](https://img.shields.io/nuget/v/Fiscalapi.XmlDownloader)](https://www.nuget.org/packages/Fiscalapi.XmlDownloader)
+
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![.NET](https://img.shields.io/badge/.NET-9.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![Nuget](https://img.shields.io/nuget/v/Fiscalapi.XmlDownloader)](https://www.nuget.org/packages/Fiscalapi.XmlDownloader)
 [![License](https://img.shields.io/badge/license-MPL-blue.svg)](LICENSE)
 
 ## 📋 Descripción
@@ -282,4 +284,4 @@ Antes de reportar un problema:
 
 Copyright © **FISCAL API S DE R.L DE C.V.**
 
-Este proyecto está licenciado bajo la **Licencia MPL** (Mozilla Public License). Consulta el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está licenciado bajo la **Licencia MPL** (Mozilla Public License). Consulta el archivo [LICENSE](LICENSE.txt) para más detalles.
