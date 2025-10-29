@@ -57,24 +57,54 @@ public static class AuthResponseService
         if (satResponse.IsSuccessStatusCode)
         {
             var envelope = XmlSerializerService.Deserialize<AuthEnvelope>(satResponse.RawResponse!);
-            return new AuthResponse
+            var tokenValue = envelope?.Body?.AutenticaResponse?.AutenticaResult;
+            
+            var authResponse = new AuthResponse
             {
                 Succeeded = true,
                 SatStatus = SatStatus.RequestSucceeded,
                 SatStatusCode = SatStatus.RequestSucceeded.ToEnumCode(),
                 SatMessage = "",
-                TokenValue = envelope?.Body?.AutenticaResponse?.AutenticaResult,
+                TokenValue = tokenValue,
                 ValidFrom = envelope?.Header?.Security?.Timestamp?.Created,
                 ValidTo = envelope?.Header?.Security?.Timestamp?.Expires,
                 RawRequest = satResponse.RawRequest,
                 RawResponse = satResponse.RawResponse,
                 Tin = credential.Certificate.Rfc
             };
+
+            // Critical logging: Verify token was received
+            if (string.IsNullOrWhiteSpace(tokenValue))
+            {
+                logger.LogWarning(
+                    "Authentication succeeded but token is missing. RFC: {Rfc}, HasEnvelope: {HasEnvelope}, HasBody: {HasBody}, HasAutenticaResponse: {HasAutenticaResponse}",
+                    credential.Certificate.Rfc,
+                    envelope != null,
+                    envelope?.Body != null,
+                    envelope?.Body?.AutenticaResponse != null);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Authentication succeeded. RFC: {Rfc}, TokenLength: {TokenLength}, ValidFrom: {ValidFrom}, ValidTo: {ValidTo}",
+                    credential.Certificate.Rfc,
+                    tokenValue.Length,
+                    authResponse.ValidFrom,
+                    authResponse.ValidTo);
+            }
+
+            return authResponse;
         }
 
         if (satResponse.RawResponse is not null && satResponse.RawResponse.ToLowerInvariant().Contains("fault"))
         {
             var faultEnvelope = XmlSerializerService.Deserialize<AuthFaultEnvelope>(satResponse.RawResponse);
+            logger.LogError(
+                "Authentication failed with SOAP fault. RFC: {Rfc}, FaultCode: {FaultCode}, FaultMessage: {FaultMessage}",
+                credential.Certificate.Rfc,
+                faultEnvelope?.Body?.Fault?.FaultCode,
+                faultEnvelope?.Body?.Fault?.FaultMessage);
+            
             return new AuthResponse
             {
                 Succeeded = false,
@@ -85,6 +115,12 @@ public static class AuthResponseService
                 RawResponse = satResponse.RawResponse,
             };
         }
+
+        logger.LogError(
+            "Authentication failed with unexpected status. RFC: {Rfc}, HttpStatusCode: {StatusCode}, ReasonPhrase: {ReasonPhrase}",
+            credential.Certificate.Rfc,
+            satResponse.HttpStatusCode,
+            satResponse.ReasonPhrase);
 
         return new AuthResponse
         {

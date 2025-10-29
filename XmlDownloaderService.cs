@@ -130,6 +130,8 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Starting authentication for RFC: {Rfc}", credential.Certificate.Rfc);
+        
         var authResponse = await _authService.AuthenticateAsync(
             credential: credential,
             logger: _logger,
@@ -137,6 +139,27 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
 
         Token = authResponse.Token;
         Credential = credential;
+        
+        // Critical logging: Authentication result
+        if (!authResponse.Succeeded)
+        {
+            _logger.LogError("Authentication failed. RFC: {Rfc}, Status: {StatusCode}, Message: {Message}",
+                credential.Certificate.Rfc,
+                authResponse.SatStatusCode,
+                authResponse.SatMessage);
+        }
+        else if (Token == null)
+        {
+            _logger.LogError(
+                "Authentication succeeded but token is null. RFC: {Rfc}, TokenValue is null or empty: {IsNullOrEmpty}",
+                credential.Certificate.Rfc,
+                string.IsNullOrWhiteSpace(authResponse.TokenValue));
+        }
+        else
+        {
+            _logger.LogInformation("Authentication succeeded. RFC: {Rfc}, Token is valid", credential.Certificate.Rfc);
+        }
+        
         return authResponse;
     }
 
@@ -149,8 +172,18 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
     public async Task<QueryResponse> CreateRequestAsync(QueryParameters parameters,
         CancellationToken cancellationToken = default)
     {
+        // Critical logging: Check token before proceeding
+        if (Token == null || Credential == null)
+        {
+            _logger.LogError("Cannot create download request: Token or Credential is null. Token is null: {TokenIsNull}, Credential is null: {CredentialIsNull}",
+                Token == null,
+                Credential == null);
+        }
+        
         EnsureAuthToken();
 
+        _logger.LogInformation("Creating download request for RFC: {Rfc}", Credential!.Certificate.Rfc);
+        
         return await _queryService.CreateAsync(
             credential: Credential!,
             authToken: Token!,
@@ -470,11 +503,15 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
     {
         if (Token == null)
         {
+            _logger.LogError("EnsureAuthToken failed: Token is null. Credential is null: {CredentialIsNull}",
+                Credential == null);
             throw new InvalidOperationException("Authentication token is required. Please authenticate first.");
         }
 
         if (Credential == null)
         {
+            _logger.LogError("EnsureAuthToken failed: Credential is null. Token is null: {TokenIsNull}",
+                Token == null);
             throw new InvalidOperationException("Credential is required. Please authenticate first.");
         }
     }

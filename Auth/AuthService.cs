@@ -53,28 +53,63 @@ public class AuthService : SatService, IAuthService
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
         ILogger logger, CancellationToken cancellationToken = default)
     {
-        // Generate Sat XML security token ID
-        var uuid = CreateSecurityToken();
+        logger.LogInformation("Starting SAT authentication process for RFC: {Rfc}", credential.Certificate.Rfc);
 
-        // Create digest and signature using unified template
-        var digest = CreateDigest(credential);
-        var signature = CreateSignature(digest, credential, uuid);
+        try
+        {
+            // Generate Sat XML security token ID
+            var uuid = CreateSecurityToken();
+            logger.LogDebug("Generated security token UUID: {Uuid}", uuid);
 
-        // Build SOAP envelope
-        var authXml = BuildEnvelope(digest, uuid, credential.Certificate.RawDataBytes.ToBase64String(),
-            signature);
+            // Create digest and signature using unified template
+            var digest = CreateDigest(credential);
+            var signature = CreateSignature(digest, credential, uuid);
 
-        // Send request
-        var satResponse = await SendRequestAsync(
-            url: SatUrl.AuthUrl,
-            action: SatUrl.AuthAction,
-            payload: authXml,
-            cancellationToken: cancellationToken);
+            // Build SOAP envelope
+            var authXml = BuildEnvelope(digest, uuid, credential.Certificate.RawDataBytes.ToBase64String(),
+                signature);
 
-        // Map response 
-        var authResponse = AuthResponseService.Build(satResponse, credential, logger);
+            // Send request
+            logger.LogInformation("Sending authentication request to SAT. URL: {Url}", SatUrl.AuthUrl);
+            var satResponse = await SendRequestAsync(
+                url: SatUrl.AuthUrl,
+                action: SatUrl.AuthAction,
+                payload: authXml,
+                cancellationToken: cancellationToken);
 
-        return authResponse;
+            logger.LogInformation("SAT authentication response received. Success: {IsSuccessStatusCode}, Status: {StatusCode}",
+                satResponse.IsSuccessStatusCode,
+                satResponse.HttpStatusCode);
+
+            // Log complete XML response for debugging
+            if (!satResponse.IsSuccessStatusCode || string.IsNullOrWhiteSpace(satResponse.RawResponse))
+            {
+                logger.LogError(
+                    "SAT authentication failed. RFC: {Rfc}, StatusCode: {StatusCode}, ReasonPhrase: {ReasonPhrase}, RawResponse: {RawResponse}",
+                    credential.Certificate.Rfc,
+                    satResponse.HttpStatusCode,
+                    satResponse.ReasonPhrase,
+                    satResponse.RawResponse ?? "[Empty Response]");
+            }
+            else
+            {
+                logger.LogDebug(
+                    "SAT authentication raw response XML. RFC: {Rfc}, ResponseLength: {Length}, RawResponse: {RawResponse}",
+                    credential.Certificate.Rfc,
+                    satResponse.RawResponse?.Length ?? 0,
+                    satResponse.RawResponse);
+            }
+
+            // Map response 
+            var authResponse = AuthResponseService.Build(satResponse, credential, logger);
+
+            return authResponse;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during SAT authentication process for RFC: {Rfc}", credential.Certificate.Rfc);
+            throw;
+        }
     }
 
     /// <summary>
