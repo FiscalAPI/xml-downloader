@@ -16,6 +16,7 @@
 
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Common.Http;
 
@@ -26,6 +27,7 @@ public abstract class SatService : IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
+    private readonly ILogger _logger;
     private bool _disposed;
 
     protected bool IsDebugEnabled { get; set; }
@@ -33,18 +35,20 @@ public abstract class SatService : IDisposable
     /// <summary>
     /// Constructor for dependency injection scenarios
     /// </summary>
-    protected SatService(HttpClient httpClient)
+    protected SatService(HttpClient httpClient, ILogger logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _ownsHttpClient = false;
     }
 
     /// <summary>
     /// Constructor for direct instantiation scenarios
     /// </summary>
-    protected SatService()
+    protected SatService(ILogger logger)
     {
         _httpClient = new HttpClient();
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _ownsHttpClient = true;
     }
 
@@ -100,6 +104,8 @@ public abstract class SatService : IDisposable
         {
             if (IsDebugEnabled)
                 LogError(ex, url, action);
+            
+            _logger.LogError(ex, "Error sending SOAP request to {Url} with action {Action}", url, action);
 
             return new SatResponse
             {
@@ -118,7 +124,7 @@ public abstract class SatService : IDisposable
     /// <param name="url">Request URL</param>
     /// <param name="soapAction">SOAP action header</param>
     /// <param name="payload">Request payload</param>
-    private static void LogRequest(HttpRequestMessage request, string url, string soapAction, string payload)
+    private void LogRequest(HttpRequestMessage request, string url, string soapAction, string payload)
     {
         try
         {
@@ -150,11 +156,11 @@ public abstract class SatService : IDisposable
             sb.AppendLine(payload);
             sb.AppendLine("=== END REQUEST ===");
 
-            Console.WriteLine(sb.ToString());
+            _logger.LogDebug(sb.ToString());
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error logging request: {ex.Message}");
+            _logger.LogError(ex, "Error logging request");
         }
     }
 
@@ -165,7 +171,7 @@ public abstract class SatService : IDisposable
     /// <param name="responseContent">Response content</param>
     /// <param name="url">Original request URL</param>
     /// <param name="soapAction">Original SOAP action</param>
-    private static void LogResponse(HttpResponseMessage response, string responseContent, string url,
+    private void LogResponse(HttpResponseMessage response, string responseContent, string url,
         string soapAction)
     {
         try
@@ -200,11 +206,11 @@ public abstract class SatService : IDisposable
             sb.AppendLine(string.IsNullOrEmpty(responseContent) ? "[Empty Response]" : responseContent);
             sb.AppendLine("=== END RESPONSE ===");
 
-            Console.WriteLine(sb.ToString());
+            _logger.LogDebug(sb.ToString());
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error logging response: {ex.Message}");
+            _logger.LogError(ex, "Error logging response");
         }
     }
 
@@ -214,7 +220,7 @@ public abstract class SatService : IDisposable
     /// <param name="ex">Exception that occurred</param>
     /// <param name="url">Request URL</param>
     /// <param name="soapAction">SOAP action</param>
-    private static void LogError(Exception ex, string url, string soapAction)
+    private void LogError(Exception ex, string url, string soapAction)
     {
         try
         {
@@ -235,11 +241,11 @@ public abstract class SatService : IDisposable
             sb.AppendLine(ex.StackTrace);
             sb.AppendLine("=== END ERROR ===");
 
-            Console.WriteLine(sb.ToString());
+            _logger.LogError(sb.ToString());
         }
         catch (Exception logEx)
         {
-            Console.WriteLine($"Error logging exception: {logEx.Message}");
+            _logger.LogError(logEx, "Error logging exception");
         }
     }
 

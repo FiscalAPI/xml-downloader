@@ -30,6 +30,25 @@ namespace Fiscalapi.XmlDownloader.Download;
 public class DownloadService : SatService, IDownloadService
 {
     /// <summary>
+    /// Constructor for dependency injection scenarios
+    /// </summary>
+    /// <param name="httpClient">HttpClient instance</param>
+    /// <param name="logger">Logger instance</param>
+    public DownloadService(HttpClient httpClient, ILogger<DownloadService> logger) 
+        : base(httpClient, logger)
+    {
+    }
+
+    /// <summary>
+    /// Constructor for direct instantiation scenarios
+    /// </summary>
+    /// <param name="logger">Logger instance</param>
+    public DownloadService(ILogger<DownloadService> logger) 
+        : base(logger)
+    {
+    }
+
+    /// <summary>
     /// Downloads a package from SAT using the provided credential, authentication token and package ID.s
     /// </summary>
     /// <param name="credential">Fiel</param>
@@ -39,7 +58,7 @@ public class DownloadService : SatService, IDownloadService
     /// <param name="logger">Logger</param>
     /// <returns>DownloadResponse</returns>
     public async Task<DownloadResponse> DownloadAsync(ICredential credential, Token authToken, string packageId,
-        CancellationToken cancellationToken = default, ILogger? logger = null)
+        ILogger logger, CancellationToken cancellationToken = default)
     {
         var toDigest = CreateDigest(packageId, credential.Certificate.Rfc);
         var signature = CreateSignature(credential, toDigest);
@@ -52,7 +71,7 @@ public class DownloadService : SatService, IDownloadService
             token: authToken.Value,
             cancellationToken: cancellationToken);
 
-        var downloadResponse = DownloadResponseService.Build(satResponse);
+        var downloadResponse = DownloadResponseService.Build(satResponse, logger);
 
         return downloadResponse;
     }

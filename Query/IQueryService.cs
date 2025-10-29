@@ -36,5 +36,5 @@ public interface IQueryService
     /// <param name="logger">Logger</param>
     /// <returns>QueryResponse</returns>
     Task<QueryResponse> CreateAsync(ICredential credential, Token authToken,
-        QueryParameters parameters, CancellationToken cancellationToken, ILogger? logger = null);
+        QueryParameters parameters, ILogger logger, CancellationToken cancellationToken = default);
 }

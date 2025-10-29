@@ -36,5 +36,5 @@ public interface IDownloadService
     /// <param name="logger">Logger</param>
     /// <returns>DownloadResponse</returns>
     Task<DownloadResponse> DownloadAsync(ICredential credential, Token authToken, string packageId,
-        CancellationToken cancellationToken = default, ILogger? logger = null);
+         ILogger logger, CancellationToken cancellationToken = default);
 }

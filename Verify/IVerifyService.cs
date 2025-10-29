@@ -36,5 +36,5 @@ public interface IVerifyService
     /// <param name="logger">Logger</param>
     /// <returns>VerifyResponse</returns>
     Task<VerifyResponse> VerifyAsync(ICredential credential, Token authToken, string requestId,
-        CancellationToken cancellationToken = default, ILogger? logger = null);
+        ILogger logger, CancellationToken cancellationToken = default);
 }

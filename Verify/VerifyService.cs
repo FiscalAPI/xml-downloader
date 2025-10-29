@@ -30,6 +30,25 @@ namespace Fiscalapi.XmlDownloader.Verify;
 public class VerifyService : SatService, IVerifyService
 {
     /// <summary>
+    /// Constructor for dependency injection scenarios
+    /// </summary>
+    /// <param name="httpClient">HttpClient instance</param>
+    /// <param name="logger">Logger instance</param>
+    public VerifyService(HttpClient httpClient, ILogger<VerifyService> logger) 
+        : base(httpClient, logger)
+    {
+    }
+
+    /// <summary>
+    /// Constructor for direct instantiation scenarios
+    /// </summary>
+    /// <param name="logger">Logger instance</param>
+    public VerifyService(ILogger<VerifyService> logger) 
+        : base(logger)
+    {
+    }
+
+    /// <summary>
     /// Verifies a download request with SAT using the provided credential, authentication token, and request ID.
     /// </summary>
     /// <param name="credential">Fiel</param>
@@ -39,7 +58,7 @@ public class VerifyService : SatService, IVerifyService
     /// <param name="logger">Logger</param>
     /// <returns>VerifyResponse</returns>
     public async Task<VerifyResponse> VerifyAsync(ICredential credential, Token authToken,
-        string requestId, CancellationToken cancellationToken = default, ILogger? logger = null)
+        string requestId, ILogger logger, CancellationToken cancellationToken = default)
     {
         var toDigest = CreateDigest(requestId, credential.Certificate.Rfc);
         var signature = CreateSignature(credential, toDigest);
@@ -52,7 +71,7 @@ public class VerifyService : SatService, IVerifyService
             token: authToken.Value,
             cancellationToken: cancellationToken);
 
-        var verifyResponse = VerifyResponseService.Build(satResponse);
+        var verifyResponse = VerifyResponseService.Build(satResponse, logger);
         return verifyResponse;
     }
 

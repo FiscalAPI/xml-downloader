@@ -30,6 +30,25 @@ namespace Fiscalapi.XmlDownloader.Query;
 public class QueryService : SatService, IQueryService
 {
     /// <summary>
+    /// Constructor for dependency injection scenarios
+    /// </summary>
+    /// <param name="httpClient">HttpClient instance</param>
+    /// <param name="logger">Logger instance</param>
+    public QueryService(HttpClient httpClient, ILogger<QueryService> logger) 
+        : base(httpClient, logger)
+    {
+    }
+
+    /// <summary>
+    /// Constructor for direct instantiation scenarios
+    /// </summary>
+    /// <param name="logger">Logger instance</param>
+    public QueryService(ILogger<QueryService> logger) 
+        : base(logger)
+    {
+    }
+
+    /// <summary>
     /// Creates a download request based on the provided parameters.
     /// </summary>
     /// <param name="credential">Fiel</param>
@@ -39,7 +58,7 @@ public class QueryService : SatService, IQueryService
     /// <param name="logger">Logger</param>
     /// <returns>QueryResponse</returns>
     public async Task<QueryResponse> CreateAsync(ICredential credential, Token authToken,
-        QueryParameters parameters, CancellationToken cancellationToken = default, ILogger? logger = null)
+        QueryParameters parameters, ILogger logger, CancellationToken cancellationToken = default)
     {
         var operationType = DetermineOperationType(parameters);
         var toDigest = CreateDigest(parameters, operationType);
@@ -53,7 +72,7 @@ public class QueryService : SatService, IQueryService
             token: authToken.Value,
             cancellationToken: cancellationToken);
 
-        var requestResponse = QueryResponseService.Build(satResponse);
+        var requestResponse = QueryResponseService.Build(satResponse, logger);
         return requestResponse;
     }
 

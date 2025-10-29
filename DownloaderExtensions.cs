@@ -170,11 +170,13 @@ public static class DownloaderExtensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddXmlDownloader(this IServiceCollection services)
     {
-        // Register the services
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IQueryService, QueryService>();
-        services.AddScoped<IVerifyService, VerifyService>();
-        services.AddScoped<IDownloadService, DownloadService>();
+        // Register HttpClient factory for SAT services
+        services.AddHttpClient<IAuthService, AuthService>();
+        services.AddHttpClient<IQueryService, QueryService>();
+        services.AddHttpClient<IVerifyService, VerifyService>();
+        services.AddHttpClient<IDownloadService, DownloadService>();
+        
+        // Register non-HTTP services as scoped
         services.AddScoped<IFileStorageService, FileStorageService>();
         services.AddScoped<IXmlDownloaderService, XmlDownloaderService>();
 

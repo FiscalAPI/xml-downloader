@@ -29,10 +29,29 @@ namespace Fiscalapi.XmlDownloader.Auth;
 public class AuthService : SatService, IAuthService
 {
     /// <summary>
+    /// Constructor for dependency injection scenarios
+    /// </summary>
+    /// <param name="httpClient">HttpClient instance</param>
+    /// <param name="logger">Logger instance</param>
+    public AuthService(HttpClient httpClient, ILogger<AuthService> logger) 
+        : base(httpClient, logger)
+    {
+    }
+
+    /// <summary>
+    /// Constructor for direct instantiation scenarios
+    /// </summary>
+    /// <param name="logger">Logger instance</param>
+    public AuthService(ILogger<AuthService> logger) 
+        : base(logger)
+    {
+    }
+
+    /// <summary>
     /// Authenticates with SAT using the provided credential and returns the authentication token
     /// </summary>
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
-        CancellationToken cancellationToken = default, ILogger? logger = null)
+        ILogger logger, CancellationToken cancellationToken = default)
     {
         // Generate Sat XML security token ID
         var uuid = CreateSecurityToken();
@@ -53,7 +72,7 @@ public class AuthService : SatService, IAuthService
             cancellationToken: cancellationToken);
 
         // Map response 
-        var authResponse = AuthResponseService.Build(satResponse, credential);
+        var authResponse = AuthResponseService.Build(satResponse, credential, logger);
 
         return authResponse;
     }

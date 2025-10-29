@@ -33,7 +33,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader;
 
-public class XmlDownloaderService : IXmlDownloaderService
+public class XmlDownloaderService : IXmlDownloaderService, IDisposable
 {
     public bool IsDebugEnabled { get; set; }
     public Token? Token { get; set; }
@@ -45,6 +45,9 @@ public class XmlDownloaderService : IXmlDownloaderService
     private readonly IVerifyService _verifyService;
     private readonly IDownloadService _downloadService;
     private readonly IFileStorageService _storageService;
+    
+    private readonly bool _ownsServices;
+    private bool _disposed;
 
     /// <summary>
     /// Default constructor for dependency injection
@@ -54,6 +57,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     /// <param name="verifyService">Verify service</param>
     /// <param name="downloadService">Download service</param>
     /// <param name="storageService">File storage service</param>
+    /// <param name="logger">Logger instance</param>
     public XmlDownloaderService(
         IAuthService authService,
         IQueryService queryService,
@@ -69,6 +73,7 @@ public class XmlDownloaderService : IXmlDownloaderService
         _downloadService = downloadService;
         _storageService = storageService;
         _logger = logger;
+        _ownsServices = false;
     }
 
     /// <summary>
@@ -76,18 +81,23 @@ public class XmlDownloaderService : IXmlDownloaderService
     /// </summary>
     public XmlDownloaderService()
     {
-        _authService = new AuthService();
-        _queryService = new QueryService();
-        _verifyService = new VerifyService();
-        _downloadService = new DownloadService();
-        _storageService = new FileStorageService();
-
+        // Create logger factory for non-DI scenario
         var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddConsole().SetMinimumLevel(LogLevel.Information);
         });
-
+        
+        // Create logger for this service
         _logger = loggerFactory.CreateLogger<XmlDownloaderService>();
+
+        // Create services with their own specific loggers in non-DI scenario
+        _authService = new AuthService(loggerFactory.CreateLogger<AuthService>());
+        _queryService = new QueryService(loggerFactory.CreateLogger<QueryService>());
+        _verifyService = new VerifyService(loggerFactory.CreateLogger<VerifyService>());
+        _downloadService = new DownloadService(loggerFactory.CreateLogger<DownloadService>());
+        _storageService = new FileStorageService();
+        
+        _ownsServices = true;
     }
 
     /// <summary>
@@ -120,7 +130,10 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
         CancellationToken cancellationToken = default)
     {
-        var authResponse = await _authService.AuthenticateAsync(credential, cancellationToken, _logger);
+        var authResponse = await _authService.AuthenticateAsync(
+            credential: credential,
+            logger: _logger,
+            cancellationToken: cancellationToken);
 
         Token = authResponse.Token;
         Credential = credential;
@@ -142,8 +155,8 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             parameters: parameters,
-            cancellationToken: cancellationToken,
-            logger: _logger
+            logger: _logger,
+            cancellationToken: cancellationToken
         );
     }
 
@@ -161,8 +174,8 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             requestId: requestId,
-            cancellationToken: cancellationToken,
-            logger: _logger
+            logger: _logger,
+            cancellationToken: cancellationToken
         );
     }
 
@@ -180,8 +193,8 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             packageId: packageId,
-            cancellationToken: cancellationToken,
-            logger: _logger
+            logger: _logger,
+            cancellationToken: cancellationToken
         );
     }
 
@@ -239,8 +252,8 @@ public class XmlDownloaderService : IXmlDownloaderService
         _storageService.ExtractZipFile(
             fullFilePath: fullFilePath,
             extractToPath: extractToPath,
-            cancellationToken: cancellationToken,
-            logger: _logger
+            logger: _logger,
+            cancellationToken: cancellationToken
         );
 
         //Load file details 
@@ -464,5 +477,38 @@ public class XmlDownloaderService : IXmlDownloaderService
         {
             throw new InvalidOperationException("Credential is required. Please authenticate first.");
         }
+    }
+
+    /// <summary>
+    /// Disposes the service, releasing resources.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes the service, releasing resources.
+    /// </summary>
+    /// <param name="disposing">Whether the call is from Dispose or finalizer</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing && _ownsServices)
+        {
+            // Dispose services in non-DI scenarios where we own them
+            if (_authService is IDisposable authDisposable)
+                authDisposable.Dispose();
+            if (_queryService is IDisposable queryDisposable)
+                queryDisposable.Dispose();
+            if (_verifyService is IDisposable verifyDisposable)
+                verifyDisposable.Dispose();
+            if (_downloadService is IDisposable downloadDisposable)
+                downloadDisposable.Dispose();
+            if (_storageService is IDisposable storageDisposable)
+                storageDisposable.Dispose();
+        }
+
+        _disposed = true;
     }
 }

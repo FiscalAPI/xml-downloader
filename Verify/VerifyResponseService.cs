@@ -19,6 +19,7 @@ using Fiscalapi.XmlDownloader.Common.Enums;
 using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Verify.Models;
 using Fiscalapi.XmlDownloader.Verify.Models.Sat;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Verify;
 
@@ -27,7 +28,7 @@ public static class VerifyResponseService
     /// <summary>
     /// Builds a VerifyResponse from the SAT response.
     /// </summary>
-    public static VerifyResponse Build(SatResponse satResponse)
+    public static VerifyResponse Build(SatResponse satResponse, ILogger logger)
     {
         if (satResponse.IsSuccessStatusCode)
         {

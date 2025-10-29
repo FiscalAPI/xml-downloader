@@ -32,6 +32,5 @@ public interface IAuthService
     /// <param name="cancellationToken">CancellationToken</param>
     /// <param name="logger">Logger</param>
     /// <returns></returns>
-    Task<AuthResponse> AuthenticateAsync(ICredential credential, CancellationToken cancellationToken = default,
-        ILogger? logger = null);
+    Task<AuthResponse> AuthenticateAsync(ICredential credential, ILogger logger, CancellationToken cancellationToken = default);
 }

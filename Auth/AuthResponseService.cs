@@ -20,12 +20,13 @@ using Fiscalapi.XmlDownloader.Auth.Models.Sat;
 using Fiscalapi.XmlDownloader.Common;
 using Fiscalapi.XmlDownloader.Common.Enums;
 using Fiscalapi.XmlDownloader.Common.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Auth;
 
 public static class AuthResponseService
 {
-    public static AuthResponse Build(SatResponse satResponse, ICredential credential)
+    public static AuthResponse Build(SatResponse satResponse, ICredential credential, ILogger logger)
     {
         /*
          *<s:envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
