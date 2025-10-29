@@ -54,7 +54,6 @@ public class XmlDownloaderService : IXmlDownloaderService
     /// <param name="verifyService">Verify service</param>
     /// <param name="downloadService">Download service</param>
     /// <param name="storageService">File storage service</param>
-    /// <param name="logger">Logger</param>
     public XmlDownloaderService(
         IAuthService authService,
         IQueryService queryService,
@@ -121,7 +120,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
         CancellationToken cancellationToken = default)
     {
-        var authResponse = await _authService.AuthenticateAsync(credential, cancellationToken);
+        var authResponse = await _authService.AuthenticateAsync(credential, cancellationToken, _logger);
 
         Token = authResponse.Token;
         Credential = credential;
@@ -143,7 +142,8 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             parameters: parameters,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            logger: _logger
         );
     }
 
@@ -161,7 +161,8 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             requestId: requestId,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            logger: _logger
         );
     }
 
@@ -179,7 +180,8 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             packageId: packageId,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            logger: _logger
         );
     }
 
@@ -193,7 +195,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task WritePackageAsync(string fullFilePath, byte[] bytes,
         CancellationToken cancellationToken = default)
     {
-        await _storageService.WriteFileAsync(fullFilePath, bytes, cancellationToken);
+        await _storageService.WriteFileAsync(fullFilePath, bytes, cancellationToken, _logger);
     }
 
     /// <summary>
@@ -207,7 +209,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task WritePackageAsync(string fullFilePath, string base64Package,
         CancellationToken cancellationToken = default)
     {
-        await _storageService.WriteFileAsync(fullFilePath, base64Package, cancellationToken);
+        await _storageService.WriteFileAsync(fullFilePath, base64Package, cancellationToken, _logger);
     }
 
     /// <summary>
@@ -220,7 +222,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        return await _storageService.ReadFileAsync(fullFilePath, cancellationToken);
+        return await _storageService.ReadFileAsync(fullFilePath, cancellationToken, _logger);
     }
 
     /// <summary>
@@ -237,7 +239,8 @@ public class XmlDownloaderService : IXmlDownloaderService
         _storageService.ExtractZipFile(
             fullFilePath: fullFilePath,
             extractToPath: extractToPath,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            logger: _logger
         );
 
         //Load file details 
@@ -248,7 +251,7 @@ public class XmlDownloaderService : IXmlDownloaderService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var xml = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken);
+            var xml = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken, _logger);
             var comprobante = XmlSerializerService.Deserialize<Comprobante>(xml);
 
             if (comprobante is null) continue;
@@ -337,7 +340,8 @@ public class XmlDownloaderService : IXmlDownloaderService
         _storageService.ExtractZipFile(
             fullFilePath: fullFilePath,
             extractToPath: extractToPath,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            logger: _logger
         );
 
         // Load file details - look for .txt files instead of XML
@@ -348,7 +352,7 @@ public class XmlDownloaderService : IXmlDownloaderService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var txtContent = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken);
+            var txtContent = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken, _logger);
             var lines = txtContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             // Skip the header line (first line contains column names)

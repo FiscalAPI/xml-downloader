@@ -20,6 +20,7 @@ using Fiscalapi.XmlDownloader.Auth.Models;
 using Fiscalapi.XmlDownloader.Common;
 using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Query.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Query;
 
@@ -35,9 +36,10 @@ public class QueryService : SatService, IQueryService
     /// <param name="authToken">Authentication token</param>
     /// <param name="parameters">Request parameters</param>
     /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="logger">Logger</param>
     /// <returns>QueryResponse</returns>
     public async Task<QueryResponse> CreateAsync(ICredential credential, Token authToken,
-        QueryParameters parameters, CancellationToken cancellationToken = default)
+        QueryParameters parameters, CancellationToken cancellationToken = default, ILogger? logger = null)
     {
         var operationType = DetermineOperationType(parameters);
         var toDigest = CreateDigest(parameters, operationType);

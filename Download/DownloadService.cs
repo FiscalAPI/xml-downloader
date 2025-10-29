@@ -20,6 +20,7 @@ using Fiscalapi.XmlDownloader.Auth.Models;
 using Fiscalapi.XmlDownloader.Common;
 using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Download.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Download;
 
@@ -35,9 +36,10 @@ public class DownloadService : SatService, IDownloadService
     /// <param name="authToken">Authentication token</param>
     /// <param name="packageId">PackageID</param>
     /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="logger">Logger</param>
     /// <returns>DownloadResponse</returns>
     public async Task<DownloadResponse> DownloadAsync(ICredential credential, Token authToken, string packageId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, ILogger? logger = null)
     {
         var toDigest = CreateDigest(packageId, credential.Certificate.Rfc);
         var signature = CreateSignature(credential, toDigest);

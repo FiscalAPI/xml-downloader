@@ -1,4 +1,5 @@
 ﻿using System.IO.Compression;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.FileStorage
 {
@@ -72,8 +73,9 @@ namespace Fiscalapi.XmlDownloader.FileStorage
         /// <param name="fullFilePath">Full path to the ZIP file</param>
         /// <param name="extractToPath">Path to extract files to</param>
         /// <param name="cancellationToken">Cancellation token</param>
+        /// <param name="logger">Logger</param>
         public void ExtractZipFile(string fullFilePath, string? extractToPath,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, ILogger? logger = null)
         {
             if (string.IsNullOrWhiteSpace(fullFilePath))
                 throw new ArgumentException("ZIP file path cannot be null or empty", nameof(fullFilePath));
@@ -141,8 +143,9 @@ namespace Fiscalapi.XmlDownloader.FileStorage
         /// <param name="fullFilePath">Full path to the file</param>
         /// <param name="data">Binary data to write</param>
         /// <param name="cancellationToken">Cancellation token</param>
+        /// <param name="logger">Logger</param>
         public async Task WriteFileAsync(string fullFilePath, byte[] data,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, ILogger? logger = null)
         {
             var directory = Path.GetDirectoryName(fullFilePath);
             if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
@@ -159,8 +162,9 @@ namespace Fiscalapi.XmlDownloader.FileStorage
         /// <param name="fullFilePath">Full path to the file</param>
         /// <param name="base64Data">Base64 encoded data to write</param>
         /// <param name="cancellationToken">Cancellation token</param>
+        /// <param name="logger">Logger</param>
         public async Task WriteFileAsync(string fullFilePath, string base64Data,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, ILogger? logger = null)
         {
             var data = Convert.FromBase64String(base64Data);
             await WriteFileAsync(fullFilePath, data, cancellationToken);
@@ -171,8 +175,10 @@ namespace Fiscalapi.XmlDownloader.FileStorage
         /// </summary>
         /// <param name="fullFilePath">Full path to the file</param>
         /// <param name="cancellationToken">Cancellation token</param>
+        /// <param name="logger">Logger</param>
         /// <returns>File content as byte array</returns>
-        public async Task<byte[]> ReadFileAsync(string fullFilePath, CancellationToken cancellationToken = default)
+        public async Task<byte[]> ReadFileAsync(string fullFilePath, CancellationToken cancellationToken = default,
+            ILogger? logger = null)
         {
             return await File.ReadAllBytesAsync(fullFilePath, cancellationToken);
         }
@@ -182,9 +188,10 @@ namespace Fiscalapi.XmlDownloader.FileStorage
         /// </summary>
         /// <param name="fullFilePath">Full path to the file</param>
         /// <param name="cancellationToken">Cancellation token</param>
+        /// <param name="logger">Logger</param>
         /// <returns>File content as string</returns>
         public async Task<string> ReadFileContentAsync(string fullFilePath,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, ILogger? logger = null)
         {
             return await File.ReadAllTextAsync(fullFilePath, cancellationToken);
         }

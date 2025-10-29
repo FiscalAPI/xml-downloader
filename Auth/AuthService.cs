@@ -19,6 +19,7 @@ using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
 using Fiscalapi.XmlDownloader.Common;
 using Fiscalapi.XmlDownloader.Common.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Auth;
 
@@ -31,7 +32,7 @@ public class AuthService : SatService, IAuthService
     /// Authenticates with SAT using the provided credential and returns the authentication token
     /// </summary>
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, ILogger? logger = null)
     {
         // Generate Sat XML security token ID
         var uuid = CreateSecurityToken();
