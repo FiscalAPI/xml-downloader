@@ -20,7 +20,6 @@ using Fiscalapi.XmlDownloader.Common.Models;
 using Fiscalapi.XmlDownloader.Download.Models;
 using Fiscalapi.XmlDownloader.Query.Models;
 using Fiscalapi.XmlDownloader.Verify.Models;
-using System.Runtime.CompilerServices;
 
 namespace Fiscalapi.XmlDownloader;
 

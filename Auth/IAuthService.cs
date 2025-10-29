@@ -16,6 +16,7 @@
 
 using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Auth;
 
@@ -29,6 +30,7 @@ public interface IAuthService
     /// </summary>
     /// <param name="credential"></param>
     /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="logger">Logger</param>
     /// <returns></returns>
-    Task<AuthResponse> AuthenticateAsync(ICredential credential, CancellationToken cancellationToken = default);
+    Task<AuthResponse> AuthenticateAsync(ICredential credential, ILogger logger, CancellationToken cancellationToken = default);
 }

@@ -17,6 +17,7 @@
 using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
 using Fiscalapi.XmlDownloader.Download.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Download;
 
@@ -32,7 +33,8 @@ public interface IDownloadService
     /// <param name="authToken">Authentication token</param>
     /// <param name="packageId">PackageID</param>
     /// <param name="cancellationToken">CancellationToken</param>
+    /// <param name="logger">Logger</param>
     /// <returns>DownloadResponse</returns>
     Task<DownloadResponse> DownloadAsync(ICredential credential, Token authToken, string packageId,
-        CancellationToken cancellationToken = default);
+         ILogger logger, CancellationToken cancellationToken = default);
 }

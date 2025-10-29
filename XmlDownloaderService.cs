@@ -33,7 +33,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader;
 
-public class XmlDownloaderService : IXmlDownloaderService
+public class XmlDownloaderService : IXmlDownloaderService, IDisposable
 {
     public bool IsDebugEnabled { get; set; }
     public Token? Token { get; set; }
@@ -45,6 +45,9 @@ public class XmlDownloaderService : IXmlDownloaderService
     private readonly IVerifyService _verifyService;
     private readonly IDownloadService _downloadService;
     private readonly IFileStorageService _storageService;
+    
+    private readonly bool _ownsServices;
+    private bool _disposed;
 
     /// <summary>
     /// Default constructor for dependency injection
@@ -54,7 +57,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     /// <param name="verifyService">Verify service</param>
     /// <param name="downloadService">Download service</param>
     /// <param name="storageService">File storage service</param>
-    /// <param name="logger">Logger</param>
+    /// <param name="logger">Logger instance</param>
     public XmlDownloaderService(
         IAuthService authService,
         IQueryService queryService,
@@ -70,6 +73,7 @@ public class XmlDownloaderService : IXmlDownloaderService
         _downloadService = downloadService;
         _storageService = storageService;
         _logger = logger;
+        _ownsServices = false;
     }
 
     /// <summary>
@@ -77,18 +81,23 @@ public class XmlDownloaderService : IXmlDownloaderService
     /// </summary>
     public XmlDownloaderService()
     {
-        _authService = new AuthService();
-        _queryService = new QueryService();
-        _verifyService = new VerifyService();
-        _downloadService = new DownloadService();
-        _storageService = new FileStorageService();
-
+        // Create logger factory for non-DI scenario
         var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddConsole().SetMinimumLevel(LogLevel.Information);
         });
-
+        
+        // Create logger for this service
         _logger = loggerFactory.CreateLogger<XmlDownloaderService>();
+
+        // Create services with their own specific loggers in non-DI scenario
+        _authService = new AuthService(loggerFactory.CreateLogger<AuthService>());
+        _queryService = new QueryService(loggerFactory.CreateLogger<QueryService>());
+        _verifyService = new VerifyService(loggerFactory.CreateLogger<VerifyService>());
+        _downloadService = new DownloadService(loggerFactory.CreateLogger<DownloadService>());
+        _storageService = new FileStorageService();
+        
+        _ownsServices = true;
     }
 
     /// <summary>
@@ -121,10 +130,36 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
         CancellationToken cancellationToken = default)
     {
-        var authResponse = await _authService.AuthenticateAsync(credential, cancellationToken);
+        _logger.LogInformation("Starting authentication for RFC: {Rfc}", credential.Certificate.Rfc);
+        
+        var authResponse = await _authService.AuthenticateAsync(
+            credential: credential,
+            logger: _logger,
+            cancellationToken: cancellationToken);
 
         Token = authResponse.Token;
         Credential = credential;
+        
+        // Critical logging: Authentication result
+        if (!authResponse.Succeeded)
+        {
+            _logger.LogError("Authentication failed. RFC: {Rfc}, Status: {StatusCode}, Message: {Message}",
+                credential.Certificate.Rfc,
+                authResponse.SatStatusCode,
+                authResponse.SatMessage);
+        }
+        else if (Token == null)
+        {
+            _logger.LogError(
+                "Authentication succeeded but token is null. RFC: {Rfc}, TokenValue is null or empty: {IsNullOrEmpty}",
+                credential.Certificate.Rfc,
+                string.IsNullOrWhiteSpace(authResponse.TokenValue));
+        }
+        else
+        {
+            _logger.LogInformation("Authentication succeeded. RFC: {Rfc}, Token is valid", credential.Certificate.Rfc);
+        }
+        
         return authResponse;
     }
 
@@ -137,12 +172,23 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task<QueryResponse> CreateRequestAsync(QueryParameters parameters,
         CancellationToken cancellationToken = default)
     {
+        // Critical logging: Check token before proceeding
+        if (Token == null || Credential == null)
+        {
+            _logger.LogError("Cannot create download request: Token or Credential is null. Token is null: {TokenIsNull}, Credential is null: {CredentialIsNull}",
+                Token == null,
+                Credential == null);
+        }
+        
         EnsureAuthToken();
 
+        _logger.LogInformation("Creating download request for RFC: {Rfc}", Credential!.Certificate.Rfc);
+        
         return await _queryService.CreateAsync(
             credential: Credential!,
             authToken: Token!,
             parameters: parameters,
+            logger: _logger,
             cancellationToken: cancellationToken
         );
     }
@@ -161,6 +207,7 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             requestId: requestId,
+            logger: _logger,
             cancellationToken: cancellationToken
         );
     }
@@ -179,6 +226,7 @@ public class XmlDownloaderService : IXmlDownloaderService
             credential: Credential!,
             authToken: Token!,
             packageId: packageId,
+            logger: _logger,
             cancellationToken: cancellationToken
         );
     }
@@ -193,7 +241,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task WritePackageAsync(string fullFilePath, byte[] bytes,
         CancellationToken cancellationToken = default)
     {
-        await _storageService.WriteFileAsync(fullFilePath, bytes, cancellationToken);
+        await _storageService.WriteFileAsync(fullFilePath, bytes, cancellationToken, _logger);
     }
 
     /// <summary>
@@ -207,7 +255,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     public async Task WritePackageAsync(string fullFilePath, string base64Package,
         CancellationToken cancellationToken = default)
     {
-        await _storageService.WriteFileAsync(fullFilePath, base64Package, cancellationToken);
+        await _storageService.WriteFileAsync(fullFilePath, base64Package, cancellationToken, _logger);
     }
 
     /// <summary>
@@ -220,7 +268,7 @@ public class XmlDownloaderService : IXmlDownloaderService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        return await _storageService.ReadFileAsync(fullFilePath, cancellationToken);
+        return await _storageService.ReadFileAsync(fullFilePath, cancellationToken, _logger);
     }
 
     /// <summary>
@@ -237,6 +285,7 @@ public class XmlDownloaderService : IXmlDownloaderService
         _storageService.ExtractZipFile(
             fullFilePath: fullFilePath,
             extractToPath: extractToPath,
+            logger: _logger,
             cancellationToken: cancellationToken
         );
 
@@ -248,7 +297,7 @@ public class XmlDownloaderService : IXmlDownloaderService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var xml = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken);
+            var xml = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken, _logger);
             var comprobante = XmlSerializerService.Deserialize<Comprobante>(xml);
 
             if (comprobante is null) continue;
@@ -337,7 +386,8 @@ public class XmlDownloaderService : IXmlDownloaderService
         _storageService.ExtractZipFile(
             fullFilePath: fullFilePath,
             extractToPath: extractToPath,
-            cancellationToken: cancellationToken
+            cancellationToken: cancellationToken,
+            logger: _logger
         );
 
         // Load file details - look for .txt files instead of XML
@@ -348,7 +398,7 @@ public class XmlDownloaderService : IXmlDownloaderService
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var txtContent = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken);
+            var txtContent = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken, _logger);
             var lines = txtContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             // Skip the header line (first line contains column names)
@@ -453,12 +503,49 @@ public class XmlDownloaderService : IXmlDownloaderService
     {
         if (Token == null)
         {
+            _logger.LogError("EnsureAuthToken failed: Token is null. Credential is null: {CredentialIsNull}",
+                Credential == null);
             throw new InvalidOperationException("Authentication token is required. Please authenticate first.");
         }
 
         if (Credential == null)
         {
+            _logger.LogError("EnsureAuthToken failed: Credential is null. Token is null: {TokenIsNull}",
+                Token == null);
             throw new InvalidOperationException("Credential is required. Please authenticate first.");
         }
+    }
+
+    /// <summary>
+    /// Disposes the service, releasing resources.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes the service, releasing resources.
+    /// </summary>
+    /// <param name="disposing">Whether the call is from Dispose or finalizer</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing && _ownsServices)
+        {
+            // Dispose services in non-DI scenarios where we own them
+            if (_authService is IDisposable authDisposable)
+                authDisposable.Dispose();
+            if (_queryService is IDisposable queryDisposable)
+                queryDisposable.Dispose();
+            if (_verifyService is IDisposable verifyDisposable)
+                verifyDisposable.Dispose();
+            if (_downloadService is IDisposable downloadDisposable)
+                downloadDisposable.Dispose();
+            if (_storageService is IDisposable storageDisposable)
+                storageDisposable.Dispose();
+        }
+
+        _disposed = true;
     }
 }

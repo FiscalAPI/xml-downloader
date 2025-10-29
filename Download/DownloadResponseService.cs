@@ -19,12 +19,13 @@ using Fiscalapi.XmlDownloader.Common.Enums;
 using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Download.Models;
 using Fiscalapi.XmlDownloader.Download.Models.Sat;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Download;
 
 public static class DownloadResponseService
 {
-    public static DownloadResponse Build(SatResponse satResponse)
+    public static DownloadResponse Build(SatResponse satResponse, ILogger logger)
     {
         if (satResponse.IsSuccessStatusCode)
         {

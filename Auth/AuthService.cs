@@ -19,6 +19,7 @@ using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
 using Fiscalapi.XmlDownloader.Common;
 using Fiscalapi.XmlDownloader.Common.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Auth;
 
@@ -28,33 +29,87 @@ namespace Fiscalapi.XmlDownloader.Auth;
 public class AuthService : SatService, IAuthService
 {
     /// <summary>
+    /// Constructor for dependency injection scenarios
+    /// </summary>
+    /// <param name="httpClient">HttpClient instance</param>
+    /// <param name="logger">Logger instance</param>
+    public AuthService(HttpClient httpClient, ILogger<AuthService> logger) 
+        : base(httpClient, logger)
+    {
+    }
+
+    /// <summary>
+    /// Constructor for direct instantiation scenarios
+    /// </summary>
+    /// <param name="logger">Logger instance</param>
+    public AuthService(ILogger<AuthService> logger) 
+        : base(logger)
+    {
+    }
+
+    /// <summary>
     /// Authenticates with SAT using the provided credential and returns the authentication token
     /// </summary>
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
-        CancellationToken cancellationToken = default)
+        ILogger logger, CancellationToken cancellationToken = default)
     {
-        // Generate Sat XML security token ID
-        var uuid = CreateSecurityToken();
+        logger.LogInformation("Starting SAT authentication process for RFC: {Rfc}", credential.Certificate.Rfc);
 
-        // Create digest and signature using unified template
-        var digest = CreateDigest(credential);
-        var signature = CreateSignature(digest, credential, uuid);
+        try
+        {
+            // Generate Sat XML security token ID
+            var uuid = CreateSecurityToken();
+            logger.LogDebug("Generated security token UUID: {Uuid}", uuid);
 
-        // Build SOAP envelope
-        var authXml = BuildEnvelope(digest, uuid, credential.Certificate.RawDataBytes.ToBase64String(),
-            signature);
+            // Create digest and signature using unified template
+            var digest = CreateDigest(credential);
+            var signature = CreateSignature(digest, credential, uuid);
 
-        // Send request
-        var satResponse = await SendRequestAsync(
-            url: SatUrl.AuthUrl,
-            action: SatUrl.AuthAction,
-            payload: authXml,
-            cancellationToken: cancellationToken);
+            // Build SOAP envelope
+            var authXml = BuildEnvelope(digest, uuid, credential.Certificate.RawDataBytes.ToBase64String(),
+                signature);
 
-        // Map response 
-        var authResponse = AuthResponseService.Build(satResponse, credential);
+            // Send request
+            logger.LogInformation("Sending authentication request to SAT. URL: {Url}", SatUrl.AuthUrl);
+            var satResponse = await SendRequestAsync(
+                url: SatUrl.AuthUrl,
+                action: SatUrl.AuthAction,
+                payload: authXml,
+                cancellationToken: cancellationToken);
 
-        return authResponse;
+            logger.LogInformation("SAT authentication response received. Success: {IsSuccessStatusCode}, Status: {StatusCode}",
+                satResponse.IsSuccessStatusCode,
+                satResponse.HttpStatusCode);
+
+            // Log complete XML response for debugging
+            if (!satResponse.IsSuccessStatusCode || string.IsNullOrWhiteSpace(satResponse.RawResponse))
+            {
+                logger.LogError(
+                    "SAT authentication failed. RFC: {Rfc}, StatusCode: {StatusCode}, ReasonPhrase: {ReasonPhrase}, RawResponse: {RawResponse}",
+                    credential.Certificate.Rfc,
+                    satResponse.HttpStatusCode,
+                    satResponse.ReasonPhrase,
+                    satResponse.RawResponse ?? "[Empty Response]");
+            }
+            else
+            {
+                logger.LogDebug(
+                    "SAT authentication raw response XML. RFC: {Rfc}, ResponseLength: {Length}, RawResponse: {RawResponse}",
+                    credential.Certificate.Rfc,
+                    satResponse.RawResponse?.Length ?? 0,
+                    satResponse.RawResponse);
+            }
+
+            // Map response 
+            var authResponse = AuthResponseService.Build(satResponse, credential, logger);
+
+            return authResponse;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during SAT authentication process for RFC: {Rfc}", credential.Certificate.Rfc);
+            throw;
+        }
     }
 
     /// <summary>

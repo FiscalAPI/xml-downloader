@@ -14,6 +14,8 @@
  * ============================================================================
  */
 
+using Microsoft.Extensions.Logging;
+
 namespace Fiscalapi.XmlDownloader.FileStorage;
 
 /// <summary>
@@ -54,9 +56,10 @@ public interface IFileStorageService
     /// <param name="fullFilePath">Full path to the ZIP file</param>
     /// <param name="extractToPath">Path to extract files to</param>
     /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="logger">Logger</param>
     /// <returns>Completion Task</returns>
     void ExtractZipFile(string fullFilePath, string extractToPath,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default, ILogger? logger = null);
 
     /// <summary>
     /// Get a list of files from the specified directory with optional file extension filter
@@ -72,7 +75,9 @@ public interface IFileStorageService
     /// <param name="fullFilePath">Full path to the file</param>
     /// <param name="data">Binary data to write</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    Task WriteFileAsync(string fullFilePath, byte[] data, CancellationToken cancellationToken = default);
+    /// <param name="logger">Logger</param>
+    Task WriteFileAsync(string fullFilePath, byte[] data, CancellationToken cancellationToken = default,
+        ILogger? logger = null);
 
     /// <summary>
     /// Write base64 encoded data to a file
@@ -80,23 +85,29 @@ public interface IFileStorageService
     /// <param name="fullFilePath">Full path to the file</param>
     /// <param name="base64Data">Base64 encoded data to write</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    Task WriteFileAsync(string fullFilePath, string base64Data, CancellationToken cancellationToken = default);
+    /// <param name="logger">Logger</param>
+    Task WriteFileAsync(string fullFilePath, string base64Data, CancellationToken cancellationToken = default,
+        ILogger? logger = null);
 
     /// <summary>
     /// Read file content as byte array
     /// </summary>
     /// <param name="fullFilePath">Full path to the file</param>
     /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="logger">Logger</param>
     /// <returns>File content as byte array</returns>
-    Task<byte[]> ReadFileAsync(string fullFilePath, CancellationToken cancellationToken = default);
+    Task<byte[]> ReadFileAsync(string fullFilePath, CancellationToken cancellationToken = default,
+        ILogger? logger = null);
 
     /// <summary>
     /// Read file content as string
     /// </summary>
     /// <param name="fullFilePath">Full path to the file</param>
     /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="logger">Logger</param>
     /// <returns>File content as string</returns>
-    Task<string> ReadFileContentAsync(string fullFilePath, CancellationToken cancellationToken = default);
+    Task<string> ReadFileContentAsync(string fullFilePath, CancellationToken cancellationToken = default,
+        ILogger? logger = null);
 
     /// <summary>
     /// Delete a file
