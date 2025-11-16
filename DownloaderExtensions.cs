@@ -31,7 +31,8 @@ namespace Fiscalapi.XmlDownloader;
 
 public static class DownloaderExtensions
 {
-    private const string SatFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+    //private const string SatFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+    private const string SatFormat = "yyyy-MM-ddTHH:mm:ss.000Z";
 
     /// <summary>
     /// Converts a DateTime to the SAT format (yyyy-MM-ddTHH:mm:ss)
