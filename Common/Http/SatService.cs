@@ -79,17 +79,13 @@ public abstract class SatService : IDisposable
 
         try
         {
-            // Log request 
-            if (IsDebugEnabled)
-                LogRequest(request, url, action, payload);
+            LogRequest(request, url, action, payload);
 
             using var response =
                 await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            // Log response
-            if (IsDebugEnabled)
-                LogResponse(response, responseContent, url, action);
+            LogResponse(response, responseContent, url, action);
 
             return new SatResponse
             {
@@ -102,8 +98,7 @@ public abstract class SatService : IDisposable
         }
         catch (Exception ex)
         {
-            if (IsDebugEnabled)
-                LogError(ex, url, action);
+            LogError(ex, url, action);
             
             _logger.LogError(ex, "Error sending SOAP request to {Url} with action {Action}", url, action);
 
@@ -128,35 +123,12 @@ public abstract class SatService : IDisposable
     {
         try
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("=== SOAP REQUEST ===");
-            sb.AppendLine($"HTTP Method: {request.Method}");
-            sb.AppendLine($"URL: {url}");
-            sb.AppendLine($"SOAP Action: {soapAction}");
-            sb.AppendLine($"Timestamp: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-
-            // Headers
-            sb.AppendLine("Headers:");
-            foreach (var header in request.Headers)
-            {
-                sb.AppendLine($"  {header.Key}: {string.Join(", ", header.Value)}");
-            }
-
-            // Content headers
-            if (request.Content?.Headers != null)
-            {
-                sb.AppendLine("Content Headers:");
-                foreach (var header in request.Content.Headers)
-                {
-                    sb.AppendLine($"  {header.Key}: {string.Join(", ", header.Value)}");
-                }
-            }
-
-            sb.AppendLine("Raw Request Body:");
-            sb.AppendLine(payload);
-            sb.AppendLine("=== END REQUEST ===");
-
-            _logger.LogDebug(sb.ToString());
+            var serverDateTime = DateTime.Now;
+            var serverTimeZone = TimeZoneInfo.Local;
+            var timestamp = $"{serverDateTime:yyyy-MM-dd HH:mm:ss} {serverTimeZone.Id}";
+            
+            _logger.LogInformation("SOAP Request - Endpoint: {Url}, HTTP Method: {Method}, Timestamp: {Timestamp}, RawRequest: {RawRequest}",
+                url, request.Method, timestamp, payload);
         }
         catch (Exception ex)
         {
@@ -176,37 +148,22 @@ public abstract class SatService : IDisposable
     {
         try
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("=== SOAP RESPONSE ===");
-            sb.AppendLine($"URL: {url}");
-            sb.AppendLine($"SOAP Action: {soapAction}");
-            sb.AppendLine($"HTTP Status Code: {(int)response.StatusCode} {response.StatusCode}");
-            sb.AppendLine($"Reason Phrase: {response.ReasonPhrase}");
-            sb.AppendLine($"Success: {response.IsSuccessStatusCode}");
-            sb.AppendLine($"Timestamp: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-
-            // Response headers
-            sb.AppendLine("Response Headers:");
-            foreach (var header in response.Headers)
+            var serverDateTime = DateTime.Now;
+            var serverTimeZone = TimeZoneInfo.Local;
+            var timestamp = $"{serverDateTime:yyyy-MM-dd HH:mm:ss} {serverTimeZone.Id}";
+            var statusCode = (int)response.StatusCode;
+            var rawResponse = string.IsNullOrEmpty(responseContent) ? "[Empty Response]" : responseContent;
+            
+            if (response.IsSuccessStatusCode)
             {
-                sb.AppendLine($"  {header.Key}: {string.Join(", ", header.Value)}");
+                _logger.LogInformation("SOAP Response - Endpoint: {Url}, HTTP Status Code: {StatusCode}, Timestamp: {Timestamp}, RawResponse: {RawResponse}",
+                    url, statusCode, timestamp, rawResponse);
             }
-
-            // Content headers
-            if (response.Content?.Headers != null)
+            else
             {
-                sb.AppendLine("Content Headers:");
-                foreach (var header in response.Content.Headers)
-                {
-                    sb.AppendLine($"  {header.Key}: {string.Join(", ", header.Value)}");
-                }
+                _logger.LogError("SOAP Response - Endpoint: {Url}, HTTP Status Code: {StatusCode}, Timestamp: {Timestamp}, RawResponse: {RawResponse}",
+                    url, statusCode, timestamp, rawResponse);
             }
-
-            sb.AppendLine("Raw Response Body:");
-            sb.AppendLine(string.IsNullOrEmpty(responseContent) ? "[Empty Response]" : responseContent);
-            sb.AppendLine("=== END RESPONSE ===");
-
-            _logger.LogDebug(sb.ToString());
         }
         catch (Exception ex)
         {
@@ -214,34 +171,17 @@ public abstract class SatService : IDisposable
         }
     }
 
-    /// <summary>
-    /// Logs error details when an exception occurs
-    /// </summary>
-    /// <param name="ex">Exception that occurred</param>
-    /// <param name="url">Request URL</param>
-    /// <param name="soapAction">SOAP action</param>
     private void LogError(Exception ex, string url, string soapAction)
     {
         try
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("=== SOAP ERROR ===");
-            sb.AppendLine($"URL: {url}");
-            sb.AppendLine($"SOAP Action: {soapAction}");
-            sb.AppendLine($"Timestamp: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-            sb.AppendLine($"Exception Type: {ex.GetType().Name}");
-            sb.AppendLine($"Message: {ex.Message}");
-
-            if (ex.InnerException != null)
-            {
-                sb.AppendLine($"Inner Exception: {ex.InnerException.Message}");
-            }
-
-            sb.AppendLine("Stack Trace:");
-            sb.AppendLine(ex.StackTrace);
-            sb.AppendLine("=== END ERROR ===");
-
-            _logger.LogError(sb.ToString());
+            var serverDateTime = DateTime.Now;
+            var serverTimeZone = TimeZoneInfo.Local;
+            var timestamp = $"{serverDateTime:yyyy-MM-dd HH:mm:ss} {serverTimeZone.Id}";
+            var innerExceptionMessage = ex.InnerException != null ? ex.InnerException.Message : null;
+            
+            _logger.LogError(ex, "SOAP Error - Endpoint: {Url}, SOAP Action: {SoapAction}, Timestamp: {Timestamp}, Exception Type: {ExceptionType}, Message: {Message}, Inner Exception: {InnerException}",
+                url, soapAction, timestamp, ex.GetType().Name, ex.Message, innerExceptionMessage);
         }
         catch (Exception logEx)
         {
