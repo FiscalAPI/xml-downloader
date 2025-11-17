@@ -81,8 +81,11 @@ public abstract class SatService : IDisposable
         {
             LogRequest(request, url, action, payload);
 
+            // Use ResponseHeadersRead to complete as soon as headers are received, allowing early error detection
+            // This prevents waiting for the entire response body before detecting HTTP errors, which can help
+            // reduce timeout issues when the SAT server is slow to generate/transmit large ZIP packages
             using var response =
-                await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
+                await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             LogResponse(response, responseContent, url, action);

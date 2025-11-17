@@ -171,11 +171,26 @@ public static class DownloaderExtensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddXmlDownloader(this IServiceCollection services)
     {
-        // Register HttpClient factory for SAT services
-        services.AddHttpClient<IAuthService, AuthService>();
-        services.AddHttpClient<IQueryService, QueryService>();
-        services.AddHttpClient<IVerifyService, VerifyService>();
-        services.AddHttpClient<IDownloadService, DownloadService>();
+        // Register HttpClient factory for SAT services with appropriate timeouts
+        services.AddHttpClient<IAuthService, AuthService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(3);
+        });
+        
+        services.AddHttpClient<IQueryService, QueryService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(3);
+        });
+        
+        services.AddHttpClient<IVerifyService, VerifyService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(3);
+        });
+        
+        services.AddHttpClient<IDownloadService, DownloadService>(client =>
+        {
+            client.Timeout = TimeSpan.FromMinutes(7);
+        });
         
         // Register non-HTTP services as scoped
         services.AddScoped<IFileStorageService, FileStorageService>();
