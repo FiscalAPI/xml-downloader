@@ -132,6 +132,9 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
     {
         _logger.LogInformation("Starting authentication for RFC: {Rfc}", credential.Certificate.Rfc);
         
+        // Configure algorithm for XML downloader (SHA1) before authenticating
+        credential.ConfigureAlgorithmForXmlDownloader();
+        
         var authResponse = await _authService.AuthenticateAsync(
             credential: credential,
             logger: _logger,
