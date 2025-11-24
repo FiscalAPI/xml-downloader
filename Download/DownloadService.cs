@@ -22,7 +22,6 @@ using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Download.Models;
 using Microsoft.Extensions.Logging;
 
-
 namespace Fiscalapi.XmlDownloader.Download;
 
 /// <summary>
