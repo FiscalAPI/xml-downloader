@@ -16,6 +16,7 @@
 
 using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Verify.Models;
 using Microsoft.Extensions.Logging;
 
@@ -32,9 +33,10 @@ public interface IVerifyService
     /// <param name="credential">Fiel</param>
     /// <param name="authToken">Authentication token</param>
     /// <param name="requestId">Request ID</param>
+    /// <param name="endpoints">Service endpoints to use for verification</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <param name="logger">Logger</param>
     /// <returns>VerifyResponse</returns>
     Task<VerifyResponse> VerifyAsync(ICredential credential, Token authToken, string requestId,
-        ILogger logger, CancellationToken cancellationToken = default);
+        ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default);
 }

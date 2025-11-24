@@ -16,6 +16,7 @@
 
 using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Query.Models;
 using Microsoft.Extensions.Logging;
 
@@ -32,9 +33,10 @@ public interface IQueryService
     /// <param name="credential">Fiel</param>
     /// <param name="authToken">Authentication token</param>
     /// <param name="parameters">Request parameters</param>
+    /// <param name="endpoints">Service endpoints to use for the query</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <param name="logger">Logger</param>
     /// <returns>QueryResponse</returns>
     Task<QueryResponse> CreateAsync(ICredential credential, Token authToken,
-        QueryParameters parameters, ILogger logger, CancellationToken cancellationToken = default);
+        QueryParameters parameters, ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default);
 }

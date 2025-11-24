@@ -54,19 +54,20 @@ public class DownloadService : SatService, IDownloadService
     /// <param name="credential">Fiel</param>
     /// <param name="authToken">Authentication token</param>
     /// <param name="packageId">PackageID</param>
+    /// <param name="endpoints">Service endpoints to use for download</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <param name="logger">Logger</param>
     /// <returns>DownloadResponse</returns>
     public async Task<DownloadResponse> DownloadAsync(ICredential credential, Token authToken, string packageId,
-        ILogger logger, CancellationToken cancellationToken = default)
+        ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default)
     {
         var toDigest = CreateDigest(packageId, credential.Certificate.Rfc);
         var signature = CreateSignature(credential, toDigest);
         var requestXml = BuildEnvelope(packageId, credential.Certificate.Rfc, signature);
 
         var satResponse = await SendRequestAsync(
-            url: SatUrl.DownloadUrl,
-            action: SatUrl.DownloadAction,
+            url: endpoints.DownloadUrl,
+            action: ServiceEndpoints.DownloadAction,
             payload: requestXml,
             token: authToken.Value,
             cancellationToken: cancellationToken);

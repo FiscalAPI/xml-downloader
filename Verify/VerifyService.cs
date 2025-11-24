@@ -54,19 +54,20 @@ public class VerifyService : SatService, IVerifyService
     /// <param name="credential">Fiel</param>
     /// <param name="authToken">Authentication token</param>
     /// <param name="requestId">Request ID</param>
+    /// <param name="endpoints">Service endpoints to use for verification</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <param name="logger">Logger</param>
     /// <returns>VerifyResponse</returns>
     public async Task<VerifyResponse> VerifyAsync(ICredential credential, Token authToken,
-        string requestId, ILogger logger, CancellationToken cancellationToken = default)
+        string requestId, ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default)
     {
         var toDigest = CreateDigest(requestId, credential.Certificate.Rfc);
         var signature = CreateSignature(credential, toDigest);
         var requestXml = BuildEnvelope(requestId, credential.Certificate.Rfc, signature);
 
         var satResponse = await SendRequestAsync(
-            url: SatUrl.VerifyUrl,
-            action: SatUrl.VerifyAction,
+            url: endpoints.VerifyUrl,
+            action: ServiceEndpoints.VerifyAction,
             payload: requestXml,
             token: authToken.Value,
             cancellationToken: cancellationToken);
