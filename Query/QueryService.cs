@@ -54,11 +54,12 @@ public class QueryService : SatService, IQueryService
     /// <param name="credential">Fiel</param>
     /// <param name="authToken">Authentication token</param>
     /// <param name="parameters">Request parameters</param>
+    /// <param name="endpoints">Service endpoints to use for the query</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <param name="logger">Logger</param>
     /// <returns>QueryResponse</returns>
     public async Task<QueryResponse> CreateAsync(ICredential credential, Token authToken,
-        QueryParameters parameters, ILogger logger, CancellationToken cancellationToken = default)
+        QueryParameters parameters, ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default)
     {
         var operationType = DetermineOperationType(parameters);
         var toDigest = CreateDigest(parameters, operationType);
@@ -66,7 +67,7 @@ public class QueryService : SatService, IQueryService
         var requestXml = BuildEnvelope(parameters, signature, operationType);
 
         var satResponse = await SendRequestAsync(
-            url: SatUrl.RequestUrl,
+            url: endpoints.QueryUrl,
             action: GetSoapActionByOperation(operationType),
             payload: requestXml,
             token: authToken.Value,
@@ -284,9 +285,9 @@ public class QueryService : SatService, IQueryService
     {
         return operationType switch
         {
-            DownloadType.Emitidos => SatUrl.RequestIssuedAction,
-            DownloadType.Recibidos => SatUrl.RequestReceivedAction,
-            DownloadType.Uuid => SatUrl.RequestUuidAction,
+            DownloadType.Emitidos => ServiceEndpoints.RequestIssuedAction,
+            DownloadType.Recibidos => ServiceEndpoints.RequestReceivedAction,
+            DownloadType.Uuid => ServiceEndpoints.RequestUuidAction,
             _ => throw new InvalidOperationException($"Unsupported operation type: {operationType}")
         };
     }

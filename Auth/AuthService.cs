@@ -51,9 +51,10 @@ public class AuthService : SatService, IAuthService
     /// Authenticates with SAT using the provided credential and returns the authentication token
     /// </summary>
     public async Task<AuthResponse> AuthenticateAsync(ICredential credential,
-        ILogger logger, CancellationToken cancellationToken = default)
+        ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting SAT authentication process for RFC: {Rfc}", credential.Certificate.Rfc);
+        logger.LogInformation("Starting SAT authentication process for RFC: {Rfc}, ServiceType: {ServiceType}", 
+            credential.Certificate.Rfc, endpoints.ServiceType);
 
         try
         {
@@ -70,10 +71,10 @@ public class AuthService : SatService, IAuthService
                 signature);
 
             // Send request
-            logger.LogInformation("Sending authentication request to SAT. URL: {Url}", SatUrl.AuthUrl);
+            logger.LogInformation("Sending authentication request to SAT. URL: {Url}", endpoints.AuthUrl);
             var satResponse = await SendRequestAsync(
-                url: SatUrl.AuthUrl,
-                action: SatUrl.AuthAction,
+                url: endpoints.AuthUrl,
+                action: ServiceEndpoints.AuthAction,
                 payload: authXml,
                 cancellationToken: cancellationToken);
 

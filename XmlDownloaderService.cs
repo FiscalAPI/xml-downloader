@@ -21,6 +21,8 @@ using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth;
 using Fiscalapi.XmlDownloader.Auth.Models;
 using Fiscalapi.XmlDownloader.Common;
+using Fiscalapi.XmlDownloader.Common.Enums;
+using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Common.Models;
 using Fiscalapi.XmlDownloader.Download;
 using Fiscalapi.XmlDownloader.Download.Models;
@@ -38,6 +40,9 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
     public bool IsDebugEnabled { get; set; }
     public Token? Token { get; set; }
     public ICredential? Credential { get; set; }
+
+    private ServiceEndpoints _serviceEndpoints;
+    public ServiceEndpoints ServiceEndpoints => _serviceEndpoints;
 
     private readonly ILogger<XmlDownloaderService> _logger;
     private readonly IAuthService _authService;
@@ -74,6 +79,7 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
         _storageService = storageService;
         _logger = logger;
         _ownsServices = false;
+        _serviceEndpoints = ServiceEndpoints.Cfdi(); // Default to CFDI
     }
 
     /// <summary>
@@ -96,8 +102,101 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
         _verifyService = new VerifyService(loggerFactory.CreateLogger<VerifyService>());
         _downloadService = new DownloadService(loggerFactory.CreateLogger<DownloadService>());
         _storageService = new FileStorageService();
-        
+        _serviceEndpoints = ServiceEndpoints.Cfdi(); // Default to CFDI
         _ownsServices = true;
+    }
+
+    /// <summary>
+    /// Sets the service type (CFDI or Retenciones) and switches endpoints accordingly.
+    /// If the current token is from a different service type, it will be invalidated to force re-authentication.
+    /// If Credential is set, re-authentication will be performed automatically.
+    /// </summary>
+    /// <param name="serviceType">The service type to switch to</param>
+    /// <param name="forceReauthenticate">If true, invalidates the current token even if it matches the service type</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Task representing the asynchronous operation</returns>
+    public async Task SetServiceType(ServiceType serviceType, bool forceReauthenticate = false, CancellationToken cancellationToken = default)
+    {
+        var newEndpoints = serviceType switch
+        {
+            ServiceType.Cfdi => ServiceEndpoints.Cfdi(),
+            ServiceType.Retenciones => ServiceEndpoints.Retenciones(),
+            _ => throw new ArgumentException($"Unknown service type: {serviceType}", nameof(serviceType))
+        };
+
+        // Check if we're switching to a different service type
+        var isSwitchingServiceType = _serviceEndpoints.ServiceType != newEndpoints.ServiceType;
+
+        // Update endpoints atomically
+        _serviceEndpoints = newEndpoints;
+
+
+        // If switching service type or force re-authenticate, invalidate token
+        var needsReauthentication = isSwitchingServiceType || forceReauthenticate;
+        
+        if (needsReauthentication)
+        {
+            if (Token != null)
+            {
+                _logger.LogInformation(
+                    "Invalidating token due to service type change. Old ServiceType: {OldServiceType}, New ServiceType: {NewServiceType}, ForceReauthenticate: {ForceReauthenticate}",
+                    _serviceEndpoints.ServiceType,
+                    newEndpoints.ServiceType,
+                    forceReauthenticate);
+            }
+            
+            Token = null; // Invalidate token to force re-authentication
+
+            // If Credential is available, re-authenticate automatically
+            if (Credential != null)
+            {
+                _logger.LogInformation(
+                    "Re-authenticating automatically after service type change. ServiceType: {ServiceType}, RFC: {Rfc}",
+                    newEndpoints.ServiceType,
+                    Credential.Certificate.Rfc);
+
+                try
+                {
+                    var authResponse = await _authService.AuthenticateAsync(
+                        credential: Credential,
+                        endpoints: _serviceEndpoints,
+                        logger: _logger,
+                        cancellationToken: cancellationToken);
+
+                    Token = authResponse.Token;
+
+                    if (!authResponse.Succeeded)
+                    {
+                        _logger.LogError(
+                            "Automatic re-authentication failed after service type change. RFC: {Rfc}, Status: {StatusCode}, Message: {Message}",
+                            Credential.Certificate.Rfc,
+                            authResponse.SatStatusCode,
+                            authResponse.SatMessage);
+                    }
+                    else if (Token == null)
+                    {
+                        _logger.LogError(
+                            "Automatic re-authentication succeeded but token is null. RFC: {Rfc}",
+                            Credential.Certificate.Rfc);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "Automatic re-authentication succeeded. RFC: {Rfc}, ServiceType: {ServiceType}",
+                            Credential.Certificate.Rfc,
+                            newEndpoints.ServiceType);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Error during automatic re-authentication after service type change. RFC: {Rfc}, ServiceType: {ServiceType}",
+                        Credential.Certificate.Rfc,
+                        newEndpoints.ServiceType);
+                     throw;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -106,11 +205,15 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
     /// <param name="base64Cer">Base64 encoded certificate</param>
     /// <param name="base64Key">Base64 encoded private key</param>
     /// <param name="password">Plain text password for the private key</param>
+    /// <param name="endpoints">Service endpoints to use for authentication. Defaults to CFDI endpoints if null.</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A <see cref="AuthResponse"/> object containing the authentication token.</returns>
     public async Task<AuthResponse> AuthenticateAsync(string base64Cer, string base64Key, string password,
-        CancellationToken cancellationToken = default)
+        ServiceEndpoints? endpoints = null, CancellationToken cancellationToken = default)
     {
+        // Set service endpoints before authenticating (default to CFDI if not specified)
+        _serviceEndpoints = endpoints ?? ServiceEndpoints.Cfdi();
+
         ICertificate certificate = new Certificate(base64Cer);
         IPrivateKey privateKey = new PrivateKey(base64Key, password);
         ICredential credential = new Credential(certificate, privateKey);
@@ -137,6 +240,7 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
         
         var authResponse = await _authService.AuthenticateAsync(
             credential: credential,
+            endpoints: _serviceEndpoints,
             logger: _logger,
             cancellationToken: cancellationToken);
 
@@ -185,12 +289,14 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
         
         EnsureAuthToken();
 
-        _logger.LogInformation("Creating download request for RFC: {Rfc}", Credential!.Certificate.Rfc);
+        _logger.LogInformation("Creating download request for RFC: {Rfc}, ServiceType: {ServiceType}", 
+            Credential!.Certificate.Rfc, _serviceEndpoints.ServiceType);
         
         return await _queryService.CreateAsync(
             credential: Credential!,
             authToken: Token!,
             parameters: parameters,
+            endpoints: _serviceEndpoints,
             logger: _logger,
             cancellationToken: cancellationToken
         );
@@ -210,6 +316,7 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
             credential: Credential!,
             authToken: Token!,
             requestId: requestId,
+            endpoints: _serviceEndpoints,
             logger: _logger,
             cancellationToken: cancellationToken
         );
@@ -229,6 +336,7 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
             credential: Credential!,
             authToken: Token!,
             packageId: packageId,
+            endpoints: _serviceEndpoints,
             logger: _logger,
             cancellationToken: cancellationToken
         );

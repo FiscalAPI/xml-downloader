@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ============================================================================
  * Mozilla Public License 2.0 (MPL-2.0)
  * Autor: FISCAL API S. DE R.L. DE C.V. - https://fiscalapi.com
@@ -14,14 +14,21 @@
  * ============================================================================
  */
 
-using Fiscalapi.XmlDownloader.Common.Attributes;
+namespace Fiscalapi.XmlDownloader.Common.Enums;
 
-namespace Fiscalapi.XmlDownloader.Query.Models;
-
-public enum QueryType
+/// <summary>
+/// Tipo de servicio de descarga masiva del SAT.
+/// </summary>
+public enum ServiceType
 {
-    [EnumCode("Metadata")] Metadata,
-    [EnumCode("CFDI")] CFDI,
-    [EnumCode("CFDI")] Retenciones,
+    /// <summary>
+    /// Servicio para descarga de CFDI regulares y metadatos
+    /// </summary>
+    Cfdi,
 
+    /// <summary>
+    /// Servicio para descarga de CFDI de retenciones e información de pagos
+    /// </summary>
+    Retenciones
 }
+

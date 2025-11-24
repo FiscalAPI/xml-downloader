@@ -16,6 +16,8 @@
 
 using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common.Enums;
+using Fiscalapi.XmlDownloader.Common.Http;
 using Fiscalapi.XmlDownloader.Common.Models;
 using Fiscalapi.XmlDownloader.Download.Models;
 using Fiscalapi.XmlDownloader.Query.Models;
@@ -40,17 +42,34 @@ public interface IXmlDownloaderService
     /// </summary>
     public Token? Token { get; set; }
 
+    /// <summary>
+    /// Service endpoints currently configured for the service (CFDI or Retenciones).
+    /// </summary>
+    public ServiceEndpoints ServiceEndpoints { get; }
+
+    /// <summary>
+    /// Sets the service type (CFDI or Retenciones) and switches endpoints accordingly.
+    /// If the current token is from a different service type, it will be invalidated to force re-authentication.
+    /// If Credential is set, re-authentication will be performed automatically.
+    /// </summary>
+    /// <param name="serviceType">The service type to switch to</param>
+    /// <param name="forceReauthenticate">If true, invalidates the current token even if it matches the service type</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Task representing the asynchronous operation</returns>
+    Task SetServiceType(ServiceType serviceType, bool forceReauthenticate = false, CancellationToken cancellationToken = default);
+
 
     /// <summary>
     /// Authenticates the user with SAT and retrieves an authentication token using the provided certificate and key in Base64 format.
+    /// </summary>
     /// <param name="base64Cer">Base64 Fiel Certificate</param>
     /// <param name="base64Key">Base64 Fiel PrivateKey</param>
     /// <param name="password">Plain Fiel PrivateKey's Password Phrase</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="endpoints">Service endpoints to use for authentication. Defaults to CFDI endpoints if null.</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>AuthResponse</returns>
-    /// </summary>
     Task<AuthResponse> AuthenticateAsync(string base64Cer, string base64Key, string password,
-        CancellationToken cancellationToken = default);
+        ServiceEndpoints? endpoints = null, CancellationToken cancellationToken = default);
 
 
     /// <summary>

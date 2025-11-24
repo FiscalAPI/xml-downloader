@@ -16,6 +16,7 @@
 
 using Fiscalapi.Credentials.Core;
 using Fiscalapi.XmlDownloader.Auth.Models;
+using Fiscalapi.XmlDownloader.Common.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Fiscalapi.XmlDownloader.Auth;
@@ -29,8 +30,9 @@ public interface IAuthService
     /// Authenticates with SAT using the provided credential and returns the authentication token.
     /// </summary>
     /// <param name="credential"></param>
+    /// <param name="endpoints">Service endpoints to use for authentication</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <param name="logger">Logger</param>
     /// <returns></returns>
-    Task<AuthResponse> AuthenticateAsync(ICredential credential, ILogger logger, CancellationToken cancellationToken = default);
+    Task<AuthResponse> AuthenticateAsync(ICredential credential, ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default);
 }
