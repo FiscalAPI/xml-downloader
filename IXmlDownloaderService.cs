@@ -70,15 +70,24 @@ public interface IXmlDownloaderService
     /// <returns>AuthResponse</returns>
     Task<AuthResponse> AuthenticateAsync(string base64Cer, string base64Key, string password,
         ServiceEndpoints? endpoints = null, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Authenticates the user with SAT and retrieves an authentication token given the Fiel credential.
+    /// </summary>
+    /// <param name="credential"></param>
+    /// <param name="endpoints">Service endpoints to use for authentication. Defaults to CFDI endpoints if null.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>AuthResponse</returns>
+    Task<AuthResponse> AuthenticateAsync(ICredential credential, ServiceEndpoints? endpoints = null, CancellationToken cancellationToken = default);
 
 
     /// <summary>
-    /// Authenticates the user with SAT and retrieves an authentication token given the Fiel credential.
+    /// Authenticates the user to CFDI endpoints with SAT and retrieves an authentication token given the Fiel credential.
     /// </summary>
     /// <param name="credential"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>AuthResponse</returns>
     Task<AuthResponse> AuthenticateAsync(ICredential credential, CancellationToken cancellationToken = default);
+
 
     /// <summary>
     /// Creates a 'download request' to the SAT with the specified query parameters.

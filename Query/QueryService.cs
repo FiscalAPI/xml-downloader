@@ -61,6 +61,8 @@ public class QueryService : SatService, IQueryService
     public async Task<QueryResponse> CreateAsync(ICredential credential, Token authToken,
         QueryParameters parameters, ServiceEndpoints endpoints, ILogger logger, CancellationToken cancellationToken = default)
     {
+        parameters.Validate(endpoints);
+
         var operationType = DetermineOperationType(parameters);
         var toDigest = CreateDigest(parameters, operationType);
         var signature = CreateSignature(credential, toDigest);

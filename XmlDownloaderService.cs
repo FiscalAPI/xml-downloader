@@ -223,6 +223,15 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
         return await AuthenticateAsync(credential, cancellationToken);
     }
 
+    public Task<AuthResponse> AuthenticateAsync(ICredential credential, ServiceEndpoints? endpoints = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Set service endpoints before authenticating (default to CFDI if not specified)
+        _serviceEndpoints = endpoints ?? ServiceEndpoints.Cfdi();
+        Credential = credential;
+        return AuthenticateAsync(credential, cancellationToken);
+    }
+
     /// <summary>
     /// Authenticate with a FiscalAPI credential.
     /// See https://github.com/FiscalAPI/fiscalapi-credentials-net for more information.
@@ -286,7 +295,7 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
                 Token == null,
                 Credential == null);
         }
-        
+
         EnsureAuthToken();
 
         _logger.LogInformation("Creating download request for RFC: {Rfc}, ServiceType: {ServiceType}", 
