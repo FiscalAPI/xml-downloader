@@ -47,6 +47,6 @@ public class Token
         ValidTo.HasValue &&
         !string.IsNullOrWhiteSpace(Value) &&
         !string.IsNullOrWhiteSpace(Tin) &&
-        DateTime.UtcNow >= ValidFrom.Value.ToUniversalTime() &&
+        (DateTime.UtcNow.AddSeconds(1)) >= ValidFrom.Value.ToUniversalTime() &&
         DateTime.UtcNow <= ValidTo.Value.ToUniversalTime();
 }
