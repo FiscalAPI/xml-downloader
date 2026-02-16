@@ -65,6 +65,13 @@ public static class VerifyResponseService
                 ? codEstatus.ToEnumElement<SatStatus>()
                 : SatStatus.Unknown;
 
+            var codSatStatus = envelope?.Body.VerifyDownloadRequestResponse
+                .VerifyDownloadRequestResult.CodigoEstadoSolicitud;
+
+            var satStatus = !string.IsNullOrWhiteSpace(codSatStatus)
+                ? codSatStatus.ToEnumElement<SatStatus>()
+                : SatStatus.Unknown;
+
             // EstadoSolicitud="3"
             var estadoSolicitud = envelope?.Body.VerifyDownloadRequestResponse
                 .VerifyDownloadRequestResult.EstadoSolicitud;
@@ -96,6 +103,8 @@ public static class VerifyResponseService
                 Succeeded = true,
                 SatStatus = status,
                 SatStatusCode = status.ToEnumCode(),
+                SatStatusDownload = satStatus,
+                SatStatusCodeDownload = satStatus.ToEnumCode(),
                 SatMessage = mensaje,
                 RequestStatus = requestStatus,
                 InvoiceCount = invoiceCount,

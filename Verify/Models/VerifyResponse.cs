@@ -14,6 +14,7 @@
  * ============================================================================
  */
 
+using Fiscalapi.XmlDownloader.Common.Enums;
 using Fiscalapi.XmlDownloader.Common.Http;
 
 namespace Fiscalapi.XmlDownloader.Verify.Models;
@@ -42,4 +43,14 @@ public class VerifyResponse : BaseResponse
     /// Indicates if the request is ready for download
     /// </summary>
     public bool IsReadyToDownload => RequestStatus == RequestStatus.Terminada && InvoiceCount > 0;
+
+    /// <summary>
+    /// Operation status code from the SAT verification service
+    /// </summary>
+    public SatStatus SatStatusDownload { get; set; }
+
+    /// <summary>
+    /// Sat 'CodigoEstadoSolicitud' received from the service
+    /// </summary>
+    public string? SatStatusCodeDownload { get; set; }
 }
