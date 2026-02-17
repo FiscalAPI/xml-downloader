@@ -58,9 +58,11 @@ public static class VerifyResponseService
          */
 
             //CodEstatus="5000"
+            // <Obsolete> No refleja correctamente el estatus de la ejecución de la acción Verify
             var codEstatus = envelope?.Body.VerifyDownloadRequestResponse
                 .VerifyDownloadRequestResult.CodEstatus;
 
+            // <Obsolete> No refleja correctamente el estatus de la ejecución de la acción Verify
             var status = !string.IsNullOrWhiteSpace(codEstatus)
                 ? codEstatus.ToEnumElement<SatStatus>()
                 : SatStatus.Unknown;
