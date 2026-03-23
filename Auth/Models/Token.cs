@@ -40,12 +40,13 @@ public class Token
 
     /// <summary>
     /// Checks if the token is currently valid based on the current time.
+    /// Converts stored timestamps to UTC before comparing to avoid DateTimeKind issues.
     /// </summary>
     public bool IsValid =>
         ValidFrom.HasValue &&
         ValidTo.HasValue &&
         !string.IsNullOrWhiteSpace(Value) &&
         !string.IsNullOrWhiteSpace(Tin) &&
-        DateTime.UtcNow >= ValidFrom.Value &&
-        DateTime.UtcNow <= ValidTo.Value;
+        (DateTime.UtcNow.AddSeconds(1)) >= ValidFrom.Value.ToUniversalTime() &&
+        DateTime.UtcNow <= ValidTo.Value.ToUniversalTime();
 }
