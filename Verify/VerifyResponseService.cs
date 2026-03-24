@@ -58,11 +58,9 @@ public static class VerifyResponseService
          */
 
             //CodEstatus="5000"
-            // <Obsolete> No refleja correctamente el estatus de la ejecución de la acción Verify
             var codEstatus = envelope?.Body.VerifyDownloadRequestResponse
                 .VerifyDownloadRequestResult.CodEstatus;
 
-            // <Obsolete> No refleja correctamente el estatus de la ejecución de la acción Verify
             var status = !string.IsNullOrWhiteSpace(codEstatus)
                 ? codEstatus.ToEnumElement<SatStatus>()
                 : SatStatus.Unknown;
@@ -105,8 +103,8 @@ public static class VerifyResponseService
                 Succeeded = true,
                 SatStatus = status,
                 SatStatusCode = status.ToEnumCode(),
-                SatStatusDownload = satStatus,
-                SatStatusCodeDownload = satStatus.ToEnumCode(),
+                RequestSatStatus = satStatus,
+                RequestSatStatusCode = satStatus.ToEnumCode(),
                 SatMessage = mensaje,
                 RequestStatus = requestStatus,
                 InvoiceCount = invoiceCount,
@@ -123,6 +121,8 @@ public static class VerifyResponseService
             SatMessage = $"StatusCode: {satResponse.HttpStatusCode} Message: {satResponse.ReasonPhrase}",
             RawRequest = satResponse.RawRequest,
             RawResponse = satResponse.RawResponse,
+            RequestSatStatus = SatStatus.Unknown,
+            RequestSatStatusCode = "UnknownError"
         };
     }
 }

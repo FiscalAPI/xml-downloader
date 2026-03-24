@@ -45,12 +45,24 @@ public class VerifyResponse : BaseResponse
     public bool IsReadyToDownload => RequestStatus == RequestStatus.Terminada && InvoiceCount > 0;
 
     /// <summary>
+    /// Operation status code from the SAT service
+    /// </summary>
+    [Obsolete("Use RequestSatStatus instead.")]
+    public SatStatus SatStatus { get; set; } = new();
+
+    /// <summary>
+    /// Sat 'CodEstatus' received from the service
+    /// </summary>
+    [Obsolete("Use RequestSatStatusCode instead.")]
+    public string? SatStatusCode { get; set; } = new("");
+
+    /// <summary>
     /// Operation status code from the SAT verification service
     /// </summary>
-    public SatStatus SatStatusDownload { get; set; }
+    public SatStatus RequestSatStatus { get; set; }
 
     /// <summary>
     /// Sat 'CodigoEstadoSolicitud' received from the service
     /// </summary>
-    public string? SatStatusCodeDownload { get; set; }
+    public string? RequestSatStatusCode { get; set; }
 }
