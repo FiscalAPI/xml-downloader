@@ -4,7 +4,7 @@
 	  <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	  <Version>5.0.16</Version>
+	  <Version>5.0.17</Version>
 	  <AssemblyVersion>$(Version)</AssemblyVersion>
 	  <FileVersion>$(Version)</FileVersion>
 	  <PackageVersion>$(Version)</PackageVersion>
@@ -33,10 +33,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Fiscalapi.Credentials" Version="4.0.340" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.5" />
+		<PackageReference Include="Fiscalapi.Credentials" Version="4.0.387" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.8" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.8" />
 	</ItemGroup>
 
 	<ItemGroup>
