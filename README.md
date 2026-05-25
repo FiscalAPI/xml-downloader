@@ -1,11 +1,11 @@
 # 🧾 Fiscalapi XML Downloader (sat-ws-descarga-masiva)
 
 
-[![.NET](https://img.shields.io/badge/.NET-8.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/8)
-[![.NET](https://img.shields.io/badge/.NET-9.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/9)
-[![.NET](https://img.shields.io/badge/.NET-10-purple.svg)](https://dotnet.microsoft.com/download/dotnet/10)
+[![.NET](https://img.shields.io/badge/.NET-8.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![.NET](https://img.shields.io/badge/.NET-9.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![Nuget](https://img.shields.io/nuget/v/Fiscalapi.XmlDownloader)](https://www.nuget.org/packages/Fiscalapi.XmlDownloader)
-[![License](https://img.shields.io/badge/license-MPL-blue.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/FiscalAPI/xml-downloader)](https://github.com/FiscalAPI/xml-downloader/blob/main/LICENSE)
 
 ## 📋 Descripción
 
@@ -235,7 +235,7 @@ Maneja el almacenamiento y lectura de paquetes descargados en el sistema de arch
 
 ## 🔧 Compatibilidad
 
-- **.NET 8** - Framework principal
+- **.NET 8 / .NET 9 / .NET 10** - Frameworks soportados (multi-target)
 - **Windows Forms** - Aplicaciones de escritorio
 - **Console Applications** - Aplicaciones de línea de comandos  
 - **Web Applications** - Aplicaciones web y APIs
