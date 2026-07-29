@@ -30,6 +30,43 @@ dotnet add package Fiscalapi.XmlDownloader
 ```
 
 
+## ⬆️ Migración v5 → v6
+
+La versión 6.0.0 introduce una API por-documento: leer un paquete ya no falla completo por un solo XML o línea de metadata ilegible, y agrega soporte para CFDI 3.3 (garantizado en descargas históricas, vigente hasta el 31-mar-2023).
+
+| # | Breaking change | v5 | v6 |
+|---|---|---|---|
+| 1 | `GetComprobantesAsync` (3 overloads) | `IAsyncEnumerable<Comprobante>` | `IAsyncEnumerable<ComprobanteResult>`: filtra por `Succeeded`; los fallidos traen `RawXml`, `ErrorMessage` y `Error` |
+| 2 | `GetMetadataAsync` (3 overloads) | `IAsyncEnumerable<MetaItem>` | `IAsyncEnumerable<MetaItemResult>`: los fallidos traen `LineNumber`, `RawLine` y `ErrorMessage` |
+| 3 | ZIP ilegible / vacío / base64 corrupto | `InvalidDataException` / `ArgumentException` | `CorruptPackageException` (tipada, con `PackageSize` e inner exception) |
+| 4 | `DownloadResponse.Succeeded` | `true` con solo HTTP 200 | `true` solo con `CodEstatus` 5000 **y** `<Paquete>` con contenido; códigos SAT no mapeados degradan a `SatStatus.Unknown` sin lanzar |
+| 5 | CFDI 3.3 | fallaba la deserialización (y tumbaba el paquete) | soportado: se mapea a la forma 4.0 unificada preservando `Version = "3.3"`; campos exclusivos 4.0 quedan con `Specified = false`; en traslados a nivel comprobante `Base = 0` (no existe en 3.3) |
+| 6 | Match de complementos tipados | por prefijo XML (`tfd`, `pago20`) | por namespace URI (el prefijo es decorativo); un complemento ilegible degrada a warning y conserva su crudo en `Complemento.Any` |
+| 7 | Flags nuevos `ExportacionSpecified`, `ObjetoImpSpecified`, `RegimenFiscalReceptorSpecified`, `UsoCFDISpecified` | — | al deserializar 4.0 se establecen en `true` automáticamente; si construyes un `Comprobante` a mano para serializar, ponlos en `true` o el atributo se omite |
+| 8 | `MetaItem.CreateFromString` / `Comprobante.DeserializeComplements` | activos | `[Obsolete]`: usa `TryCreateFromString` / `TryDeserializeComplements`; el parse de metadata usa `CultureInfo.InvariantCulture` |
+
+Ejemplo de migración:
+
+```csharp
+// v5
+await foreach (var comprobante in service.GetComprobantesAsync(downloadResponse))
+{
+    Save(comprobante);
+}
+
+// v6
+await foreach (var result in service.GetComprobantesAsync(downloadResponse))
+{
+    if (result.Succeeded)
+        Save(result.Comprobante!);          // CFDI 3.3 o 4.0, forma unificada
+    else
+        LogFailure(result.SourceName, result.ErrorMessage, result.RawXml);
+}
+```
+
+Los complementos sin modelo tipado (nómina, carta porte, comercio exterior, INE, Pagos 1.0 de CFDI 3.3, etc.) **no se pierden**: viajan crudos como `XmlElement` en `Comprobante.Complemento.Any` — persístelos si los necesitas.
+
+
 ## 🔄 Flujo de Operación
 
 ```mermaid
