@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -107,43 +108,111 @@ namespace Fiscalapi.XmlDownloader.Common.Models
         /// <summary>
         /// Método para parsear una línea de texto separada por ~ al objeto MetaItem
         /// </summary>
+        [Obsolete("Use TryCreateFromString(); será eliminado en v7.")]
         public static MetaItem CreateFromString(string metadataTextLine)
         {
+            if (TryCreateFromString(metadataTextLine, out var metaItem, out var error))
+                return metaItem!;
+
+            throw new ArgumentException(error, nameof(metadataTextLine));
+        }
+
+        /// <summary>
+        /// Parsea una línea de metadata separada por ~ de forma tolerante y con cultura
+        /// invariante. Nunca lanza: una línea malformada devuelve false con un error
+        /// descriptivo.
+        /// </summary>
+        /// <param name="metadataTextLine">Línea del archivo .txt de metadata.</param>
+        /// <param name="metaItem">Metadata parseada, o null si la línea es inválida.</param>
+        /// <param name="error">Descripción del problema cuando el parseo falla.</param>
+        public static bool TryCreateFromString(string? metadataTextLine, out MetaItem? metaItem, out string? error)
+        {
+            metaItem = null;
+            error = null;
+
             if (string.IsNullOrWhiteSpace(metadataTextLine))
-                throw new ArgumentException("Los datos no pueden estar vacíos", nameof(metadataTextLine));
+            {
+                error = "La línea está vacía.";
+                return false;
+            }
 
             var fields = metadataTextLine.Split('~');
 
             if (fields.Length < 11)
-                throw new ArgumentException("Formato de datos inválido. Se requieren al menos 11 campos",
-                    nameof(metadataTextLine));
+            {
+                error = $"Formato inválido: se requieren al menos 11 campos y se encontraron {fields.Length}.";
+                return false;
+            }
 
-            return new MetaItem(
+            if (!DateTime.TryParse(fields[6], CultureInfo.InvariantCulture, DateTimeStyles.None, out var invoiceDate))
+            {
+                error = $"Campo 7 (fecha de emisión) inválido: '{fields[6]}'.";
+                return false;
+            }
+
+            DateTime? satCertificationDate = null;
+            if (!string.IsNullOrEmpty(fields[7]))
+            {
+                if (!DateTime.TryParse(fields[7], CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+                {
+                    error = $"Campo 8 (fecha de certificación) inválido: '{fields[7]}'.";
+                    return false;
+                }
+
+                satCertificationDate = parsed;
+            }
+
+            if (!decimal.TryParse(fields[8], NumberStyles.Number, CultureInfo.InvariantCulture, out var amount))
+            {
+                error = $"Campo 9 (monto) inválido: '{fields[8]}'.";
+                return false;
+            }
+
+            if (!int.TryParse(fields[10], NumberStyles.Integer, CultureInfo.InvariantCulture, out var status))
+            {
+                error = $"Campo 11 (estatus) inválido: '{fields[10]}'.";
+                return false;
+            }
+
+            DateTime? cancellationDate = null;
+            if (fields.Length > 11 && !string.IsNullOrEmpty(fields[11]))
+            {
+                if (!DateTime.TryParse(fields[11], CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+                {
+                    error = $"Campo 12 (fecha de cancelación) inválido: '{fields[11]}'.";
+                    return false;
+                }
+
+                cancellationDate = parsed;
+            }
+
+            metaItem = new MetaItem(
                 invoiceUuid: fields[0],
                 issuerTin: fields[1],
                 issuerName: fields[2],
                 recipientTin: fields[3],
                 recipientName: fields[4],
                 pacTin: fields[5],
-                invoiceDate: DateTime.Parse(fields[6]),
-                satCertificationDate: string.IsNullOrEmpty(fields[7]) ? null : DateTime.Parse(fields[7]),
-                amount: decimal.Parse(fields[8]),
+                invoiceDate: invoiceDate,
+                satCertificationDate: satCertificationDate,
+                amount: amount,
                 invoiceType: fields[9],
-                status: int.Parse(fields[10]),
-                cancellationDate: fields.Length > 11 && !string.IsNullOrEmpty(fields[11])
-                    ? DateTime.Parse(fields[11])
-                    : null
+                status: status,
+                cancellationDate: cancellationDate
             );
+            return true;
         }
 
         /// <summary>
-        /// Convierte el objeto a string con formato separado por ~
+        /// Convierte el objeto a string con formato separado por ~ (cultura invariante,
+        /// round-trip con TryCreateFromString)
         /// </summary>
         public override string ToString()
         {
             return $"{InvoiceUuid}~{IssuerTin}~{IssuerName}~{RecipientTin}~{RecipientName}~{PacTin}~" +
                    $"{InvoiceDate:yyyy-MM-dd HH:mm:ss}~{SatCertificationDate?.ToString("yyyy-MM-dd HH:mm:ss")}~" +
-                   $"{Amount}~{InvoiceType}~{Status}~{CancellationDate?.ToString("yyyy-MM-dd HH:mm:ss")}";
+                   $"{Amount.ToString(CultureInfo.InvariantCulture)}~{InvoiceType}~{Status}~" +
+                   $"{CancellationDate?.ToString("yyyy-MM-dd HH:mm:ss")}";
         }
 
         /// <summary>

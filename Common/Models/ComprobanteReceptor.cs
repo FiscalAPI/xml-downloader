@@ -37,8 +37,12 @@ public class ComprobanteReceptor {
     private string numRegIdTribField;
     
     private c_RegimenFiscal regimenFiscalReceptorField;
-    
+
+    private bool regimenFiscalReceptorFieldSpecified;
+
     private c_UsoCFDI usoCFDIField;
+
+    private bool usoCFDIFieldSpecified;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
@@ -116,7 +120,23 @@ public class ComprobanteReceptor {
             regimenFiscalReceptorField = value;
         }
     }
-    
+
+    /// <summary>
+    /// Indica si el atributo RegimenFiscalReceptor está presente. Al deserializar un CFDI 4.0
+    /// el XmlSerializer lo establece en true automáticamente; en CFDIs 3.3 mapeados queda en
+    /// false (el atributo no existe en 3.3), lo que evita interpretar el default del enum
+    /// como un régimen real.
+    /// </summary>
+    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool RegimenFiscalReceptorSpecified {
+        get {
+            return regimenFiscalReceptorFieldSpecified;
+        }
+        set {
+            regimenFiscalReceptorFieldSpecified = value;
+        }
+    }
+
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
     public c_UsoCFDI UsoCFDI {
@@ -125,6 +145,21 @@ public class ComprobanteReceptor {
         }
         set {
             usoCFDIField = value;
+        }
+    }
+
+    /// <summary>
+    /// Indica si el atributo UsoCFDI está presente. Al deserializar un CFDI 4.0 el
+    /// XmlSerializer lo establece en true automáticamente; en CFDIs 3.3 mapeados puede quedar
+    /// en false cuando el código no existe en el catálogo 4.0.
+    /// </summary>
+    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool UsoCFDISpecified {
+        get {
+            return usoCFDIFieldSpecified;
+        }
+        set {
+            usoCFDIFieldSpecified = value;
         }
     }
 }

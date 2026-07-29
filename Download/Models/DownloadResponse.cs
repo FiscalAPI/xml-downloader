@@ -23,17 +23,30 @@ namespace Fiscalapi.XmlDownloader.Download.Models;
 /// </summary>
 public class DownloadResponse : BaseResponse
 {
+    private string? _base64Package;
+    private byte[]? _packageBytes;
+
     /// <summary>
     /// Base64 encoded package containing the downloaded data.
     /// </summary>
-    public string? Base64Package { get; set; }
+    public string? Base64Package
+    {
+        get => _base64Package;
+        set
+        {
+            _base64Package = value;
+            _packageBytes = null;
+        }
+    }
 
     /// <summary>
-    /// Bytes of the package containing the downloaded data.
+    /// Bytes of the package containing the downloaded data. Decoded once per instance
+    /// (SAT packages can weigh hundreds of MB). Throws <see cref="FormatException"/>
+    /// if <see cref="Base64Package"/> is not valid base64.
     /// </summary>
-    public byte[] PackageBytes => !string.IsNullOrWhiteSpace(Base64Package)
-        ? Convert.FromBase64String(Base64Package)
-        : Array.Empty<byte>();
+    public byte[] PackageBytes => _packageBytes ??= string.IsNullOrWhiteSpace(_base64Package)
+        ? Array.Empty<byte>()
+        : Convert.FromBase64String(_base64Package);
 
     /// <summary>
     /// Size of the package in bytes

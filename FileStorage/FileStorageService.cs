@@ -87,12 +87,25 @@ namespace Fiscalapi.XmlDownloader.FileStorage
                 throw new FileNotFoundException($"ZIP file not found: {fullFilePath}");
 
 
+            // Normalized root with trailing separator to validate against zip-slip
+            // (entries like "..\evil.xml" escaping the extraction directory).
+            var extractRoot = Path.GetFullPath(extractToPath);
+            if (!extractRoot.EndsWith(Path.DirectorySeparatorChar))
+                extractRoot += Path.DirectorySeparatorChar;
+
             using var archive = ZipFile.OpenRead(fullFilePath);
             foreach (var entry in archive.Entries)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var destinationPath = Path.Combine(extractToPath, entry.FullName);
+                var destinationPath = Path.GetFullPath(Path.Combine(extractRoot, entry.FullName));
+
+                if (!destinationPath.StartsWith(extractRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger?.LogWarning(
+                        "Entrada ZIP fuera del directorio destino omitida (zip-slip): {Entry}", entry.FullName);
+                    continue;
+                }
 
                 // Ensure the directory exists
                 var directoryPath = Path.GetDirectoryName(destinationPath);

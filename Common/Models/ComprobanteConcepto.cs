@@ -57,6 +57,8 @@ public class ComprobanteConcepto {
     private bool descuentoFieldSpecified;
     
     private c_ObjetoImp objetoImpField;
+
+    private bool objetoImpFieldSpecified;
     
     /// <remarks/>
     public ComprobanteConceptoImpuestos Impuestos {
@@ -239,6 +241,21 @@ public class ComprobanteConcepto {
         }
         set {
             objetoImpField = value;
+        }
+    }
+
+    /// <summary>
+    /// Indica si el atributo ObjetoImp está presente. Al deserializar un CFDI 4.0 el
+    /// XmlSerializer lo establece en true automáticamente; en CFDIs 3.3 mapeados queda en
+    /// false (el atributo no existe en 3.3).
+    /// </summary>
+    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool ObjetoImpSpecified {
+        get {
+            return objetoImpFieldSpecified;
+        }
+        set {
+            objetoImpFieldSpecified = value;
         }
     }
 }
