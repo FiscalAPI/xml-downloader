@@ -144,59 +144,79 @@ public interface IXmlDownloaderService
 
 
     /// <summary>
-    /// Retrieves a list of Comprobantes from a package represented by its extracted directory path.
+    /// Retrieves per-document results from a package represented by its .zip file path.
+    /// Unreadable documents yield failed results (<c>Succeeded = false</c>) with the raw XML
+    /// and error; the enumeration is never aborted by a single document. Supports CFDI 3.3
+    /// and 4.0 (3.3 is mapped to the unified 4.0 model preserving <c>Version = "3.3"</c>).
     /// </summary>
     /// <param name="fullZipFilePath">Package .zip file path</param>
-    /// <param name="extractToPath"></param>
+    /// <param name="extractToPath">Path where to extract the zip file</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>List of Comprobantes objects</returns>
-    IAsyncEnumerable<Comprobante> GetComprobantesAsync(string fullZipFilePath, string extractToPath,
+    /// <returns>A <see cref="IAsyncEnumerable{ComprobanteResult}"/> of per-document results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    IAsyncEnumerable<ComprobanteResult> GetComprobantesAsync(string fullZipFilePath, string extractToPath,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a list of Comprobantes from a package represented by its byte array.
+    /// Retrieves per-document results from a package represented by its byte array.
+    /// Unreadable documents yield failed results (<c>Succeeded = false</c>) with the raw XML
+    /// and error; the enumeration is never aborted by a single document. Supports CFDI 3.3
+    /// and 4.0 (3.3 is mapped to the unified 4.0 model preserving <c>Version = "3.3"</c>).
     /// </summary>
     /// <param name="packageBytes">Package Bytes</param>
     /// <param name="cancellationToken">cancellationToken</param>
-    /// <returns>List of Comprobantes objects</returns>
-    IAsyncEnumerable<Comprobante> GetComprobantesAsync(byte[] packageBytes,
+    /// <returns>A <see cref="IAsyncEnumerable{ComprobanteResult}"/> of per-document results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    IAsyncEnumerable<ComprobanteResult> GetComprobantesAsync(byte[] packageBytes,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a list of Comprobantes from a package represented by its DownloadResponse.
+    /// Retrieves per-document results from a package represented by its DownloadResponse.
+    /// Unreadable documents yield failed results (<c>Succeeded = false</c>) with the raw XML
+    /// and error; the enumeration is never aborted by a single document.
     /// </summary>
     /// <param name="downloadResponse">DownloadResponse</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>List of Comprobantes objects</returns>
-    IAsyncEnumerable<Comprobante> GetComprobantesAsync(DownloadResponse downloadResponse,
+    /// <returns>A <see cref="IAsyncEnumerable{ComprobanteResult}"/> of per-document results.</returns>
+    /// <exception cref="CorruptPackageException">The ZIP is unreadable, empty or the base64 is invalid.</exception>
+    IAsyncEnumerable<ComprobanteResult> GetComprobantesAsync(DownloadResponse downloadResponse,
         CancellationToken cancellationToken = default);
 
 
     /// <summary>
-    /// Retrieves a list of MetaItems from a package represented by its extracted directory path.
+    /// Retrieves per-line metadata results from a package represented by its .zip file path.
+    /// Malformed lines yield failed results with <c>LineNumber</c>/<c>RawLine</c>; the
+    /// enumeration is never aborted by a single line.
     /// </summary>
     /// <param name="fullFilePath">Package .zip file path</param>
     /// <param name="extractToPath">Path where to extract the zip file</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
-    IAsyncEnumerable<MetaItem> GetMetadataAsync(string fullFilePath, string extractToPath,
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItemResult}"/> of per-line results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    IAsyncEnumerable<MetaItemResult> GetMetadataAsync(string fullFilePath, string extractToPath,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a list of MetaItems from a package represented by its byte array.
+    /// Retrieves per-line metadata results from a package represented by its byte array.
+    /// Malformed lines yield failed results with <c>LineNumber</c>/<c>RawLine</c>; the
+    /// enumeration is never aborted by a single line.
     /// </summary>
     /// <param name="packageBytes">Package Bytes</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
-    IAsyncEnumerable<MetaItem> GetMetadataAsync(byte[] packageBytes,
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItemResult}"/> of per-line results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    IAsyncEnumerable<MetaItemResult> GetMetadataAsync(byte[] packageBytes,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a list of MetaItems from a package represented by its DownloadResponse.
+    /// Retrieves per-line metadata results from a package represented by its DownloadResponse.
+    /// Malformed lines yield failed results with <c>LineNumber</c>/<c>RawLine</c>; the
+    /// enumeration is never aborted by a single line.
     /// </summary>
     /// <param name="downloadResponse">DownloadResponse</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
-    IAsyncEnumerable<MetaItem> GetMetadataAsync(DownloadResponse downloadResponse,
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItemResult}"/> of per-line results.</returns>
+    /// <exception cref="CorruptPackageException">The ZIP is unreadable, empty or the base64 is invalid.</exception>
+    IAsyncEnumerable<MetaItemResult> GetMetadataAsync(DownloadResponse downloadResponse,
         CancellationToken cancellationToken = default);
 }

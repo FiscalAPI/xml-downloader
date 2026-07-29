@@ -392,53 +392,56 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
     }
 
     /// <summary>
-    /// Retrieves a list of Comprobantes from a package represented by its extracted directory path.
+    /// Retrieves per-document results from a package represented by its .zip file path.
+    /// A single unreadable document never aborts the enumeration; only an unreadable ZIP
+    /// throws <see cref="CorruptPackageException"/>.
     /// </summary>
     /// <param name="fullFilePath">Package .zip file path</param>
-    /// <param name="extractToPath"></param>
+    /// <param name="extractToPath">Path where to extract the zip file</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{Comprobante}"/> of <see cref="Comprobante"/> objects.</returns>
-    public async IAsyncEnumerable<Comprobante> GetComprobantesAsync(string fullFilePath, string extractToPath,
+    /// <returns>A <see cref="IAsyncEnumerable{ComprobanteResult}"/> of per-document results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    public async IAsyncEnumerable<ComprobanteResult> GetComprobantesAsync(string fullFilePath, string extractToPath,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        //Unzip the package to a default directory
-        _storageService.ExtractZipFile(
-            fullFilePath: fullFilePath,
-            extractToPath: extractToPath,
-            logger: _logger,
-            cancellationToken: cancellationToken
-        );
+        ExtractZipFileOrThrow(fullFilePath, extractToPath, cancellationToken);
 
-        //Load file details 
         var files = _storageService.GetFiles(extractToPath, FileStorageSettings.CfdiExtension);
 
-        //Serialize each XML file to Comprobante object
         foreach (var file in files)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var xml = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken, _logger);
-            var comprobante = XmlSerializerService.Deserialize<Comprobante>(xml);
+            var (xml, readError) = await TryReadFileAsync(file.FilePath, cancellationToken);
 
-            if (comprobante is null) continue;
+            if (xml is null)
+            {
+                _logger.LogWarning("No se pudo leer el archivo {File}: {Error}", file.FilePath, readError);
+                yield return new ComprobanteResult
+                {
+                    SourceName = file.FilePath,
+                    ErrorMessage = readError
+                };
+                continue;
+            }
 
-            comprobante.Base64Content = xml.EncodeToBase64();
-            comprobante.DeserializeComplements();
-            yield return comprobante;
+            yield return ParseComprobante(xml, file.FilePath);
         }
     }
 
     /// <summary>
-    /// Retrieves a list of Comprobantes from a package represented by its byte array.
+    /// Retrieves per-document results from a package represented by its byte array.
+    /// A single unreadable document never aborts the enumeration; only an unreadable ZIP
+    /// throws <see cref="CorruptPackageException"/>.
     /// </summary>
     /// <param name="packageBytes">Package Bytes</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{Comprobante}"/> of <see cref="Comprobante"/> objects.</returns>
-    public async IAsyncEnumerable<Comprobante> GetComprobantesAsync(byte[] packageBytes,
+    /// <returns>A <see cref="IAsyncEnumerable{ComprobanteResult}"/> of per-document results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    public async IAsyncEnumerable<ComprobanteResult> GetComprobantesAsync(byte[] packageBytes,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var memoryStream = new MemoryStream(packageBytes);
-        using var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
+        using var zipArchive = OpenZipArchive(packageBytes);
 
         foreach (var entry in zipArchive.Entries)
         {
@@ -448,105 +451,100 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
             if (!entry.Name.EndsWith(FileStorageSettings.CfdiExtension, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            // Read the entry stream
-            await using var entryStream = entry.Open();
-            using var reader = new StreamReader(entryStream);
+            var (xml, readError) = await TryReadEntryAsync(entry, cancellationToken);
 
-            var xml = await reader.ReadToEndAsync(cancellationToken);
+            if (xml is null)
+            {
+                _logger.LogWarning("No se pudo leer la entrada {Entry} del paquete: {Error}",
+                    entry.FullName, readError);
+                yield return new ComprobanteResult
+                {
+                    SourceName = entry.FullName,
+                    ErrorMessage = readError
+                };
+                continue;
+            }
 
-            var comprobante = XmlSerializerService.Deserialize<Comprobante>(xml);
-
-            if (comprobante is null) continue;
-
-            comprobante.Base64Content = xml.EncodeToBase64();
-            comprobante.DeserializeComplements();
-            yield return comprobante;
+            yield return ParseComprobante(xml, entry.FullName);
         }
     }
 
     /// <summary>
-    /// Retrieves a list of Comprobantes from a package represented by its DownloadResponse.
+    /// Retrieves per-document results from a package represented by its DownloadResponse.
+    /// A single unreadable document never aborts the enumeration.
     /// </summary>
     /// <param name="downloadResponse">DownloadResponse</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{Comprobante}"/> of <see cref="Comprobante"/> objects.</returns>
-    public async IAsyncEnumerable<Comprobante> GetComprobantesAsync(DownloadResponse downloadResponse,
+    /// <returns>A <see cref="IAsyncEnumerable{ComprobanteResult}"/> of per-document results.</returns>
+    /// <exception cref="CorruptPackageException">The ZIP is unreadable, empty or the base64 is invalid.</exception>
+    public async IAsyncEnumerable<ComprobanteResult> GetComprobantesAsync(DownloadResponse downloadResponse,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (downloadResponse is null)
-        {
-            throw new ArgumentNullException(nameof(downloadResponse), "Download response cannot be null.");
-        }
+        var packageBytes = MaterializePackageBytes(downloadResponse);
 
-        if (downloadResponse.PackageSize <= 0)
+        await foreach (var result in GetComprobantesAsync(packageBytes, cancellationToken))
         {
-            throw new ArgumentException("Package ID cannot be null or empty.", nameof(downloadResponse.PackageBytes));
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        await foreach (var comprobante in GetComprobantesAsync(downloadResponse.PackageBytes, cancellationToken))
-        {
-            yield return comprobante;
+            yield return result;
         }
     }
 
 
     /// <summary>
-    /// Retrieves a list of MetaItems from a package represented by its extracted directory path.
+    /// Retrieves per-line metadata results from a package represented by its .zip file path.
+    /// A single malformed line never aborts the enumeration; only an unreadable ZIP
+    /// throws <see cref="CorruptPackageException"/>.
     /// </summary>
     /// <param name="fullFilePath">Package .zip file path</param>
     /// <param name="extractToPath">Path where to extract the zip file</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
-    public async IAsyncEnumerable<MetaItem> GetMetadataAsync(string fullFilePath, string extractToPath,
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItemResult}"/> of per-line results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    public async IAsyncEnumerable<MetaItemResult> GetMetadataAsync(string fullFilePath, string extractToPath,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        // Unzip the package to a default directory
-        _storageService.ExtractZipFile(
-            fullFilePath: fullFilePath,
-            extractToPath: extractToPath,
-            cancellationToken: cancellationToken,
-            logger: _logger
-        );
+        ExtractZipFileOrThrow(fullFilePath, extractToPath, cancellationToken);
 
         // Load file details - look for .txt files instead of XML
         var files = _storageService.GetFiles(extractToPath, FileStorageSettings.MetaExtension);
 
-        // Process each TXT file to extract MetaItem objects
         foreach (var file in files)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var txtContent = await _storageService.ReadFileContentAsync(file.FilePath, cancellationToken, _logger);
-            var lines = txtContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var (txtContent, readError) = await TryReadFileAsync(file.FilePath, cancellationToken);
 
-            // Skip the header line (first line contains column names)
-            for (var i = 1; i < lines.Length; i++)
+            if (txtContent is null)
+            {
+                _logger.LogWarning("No se pudo leer el archivo {File}: {Error}", file.FilePath, readError);
+                yield return new MetaItemResult
+                {
+                    SourceName = file.FilePath,
+                    ErrorMessage = readError
+                };
+                continue;
+            }
+
+            foreach (var result in ParseMetadataLines(txtContent, file.FilePath))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                if (string.IsNullOrWhiteSpace(lines[i]))
-                    continue;
-
-                var metaItem = MetaItem.CreateFromString(lines[i]);
-                metaItem.Base64Content = lines[i].EncodeToBase64();
-                yield return metaItem;
+                yield return result;
             }
         }
     }
 
     /// <summary>
-    /// Retrieves a list of MetaItems from a package represented by its byte array.
+    /// Retrieves per-line metadata results from a package represented by its byte array.
+    /// A single malformed line never aborts the enumeration; only an unreadable ZIP
+    /// throws <see cref="CorruptPackageException"/>.
     /// </summary>
     /// <param name="packageBytes">Package Bytes</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
-    public async IAsyncEnumerable<MetaItem> GetMetadataAsync(byte[] packageBytes,
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItemResult}"/> of per-line results.</returns>
+    /// <exception cref="CorruptPackageException">The whole ZIP is unreadable (corrupt or empty).</exception>
+    public async IAsyncEnumerable<MetaItemResult> GetMetadataAsync(byte[] packageBytes,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var memoryStream = new MemoryStream(packageBytes);
-        using var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
+        using var zipArchive = OpenZipArchive(packageBytes);
 
         foreach (var entry in zipArchive.Entries)
         {
@@ -556,61 +554,222 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
             if (!entry.Name.EndsWith(FileStorageSettings.MetaExtension, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            // Read the entry stream
-            await using var entryStream = entry.Open();
-            using var reader = new StreamReader(entryStream);
-            var txtContent = await reader.ReadToEndAsync(cancellationToken);
+            var (txtContent, readError) = await TryReadEntryAsync(entry, cancellationToken);
 
-            var lines = txtContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (txtContent is null)
+            {
+                _logger.LogWarning("No se pudo leer la entrada {Entry} del paquete: {Error}",
+                    entry.FullName, readError);
+                yield return new MetaItemResult
+                {
+                    SourceName = entry.FullName,
+                    ErrorMessage = readError
+                };
+                continue;
+            }
 
-            // Skip the header line (first line contains column names)
-            for (var i = 1; i < lines.Length; i++)
+            foreach (var result in ParseMetadataLines(txtContent, entry.FullName))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                if (string.IsNullOrWhiteSpace(lines[i]))
-                    continue;
-
-
-                var metaItem = MetaItem.CreateFromString(lines[i]);
-                metaItem.Base64Content = lines[i].EncodeToBase64();
-
-                yield return metaItem;
+                yield return result;
             }
         }
     }
 
     /// <summary>
-    /// Retrieves a list of MetaItems from a package represented by its DownloadResponse.
+    /// Retrieves per-line metadata results from a package represented by its DownloadResponse.
+    /// A single malformed line never aborts the enumeration.
     /// </summary>
     /// <param name="downloadResponse">DownloadResponse</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A <see cref="IAsyncEnumerable{MetaItem}"/> of <see cref="MetaItem"/> objects.</returns>
-    public async IAsyncEnumerable<MetaItem> GetMetadataAsync(DownloadResponse downloadResponse,
+    /// <returns>A <see cref="IAsyncEnumerable{MetaItemResult}"/> of per-line results.</returns>
+    /// <exception cref="CorruptPackageException">The ZIP is unreadable, empty or the base64 is invalid.</exception>
+    public async IAsyncEnumerable<MetaItemResult> GetMetadataAsync(DownloadResponse downloadResponse,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var packageBytes = MaterializePackageBytes(downloadResponse);
+
+        await foreach (var result in GetMetadataAsync(packageBytes, cancellationToken))
+        {
+            yield return result;
+        }
+    }
+
+    /// <summary>
+    /// Opens the package as a ZipArchive. Empty or corrupt packages are a terminal failure
+    /// of the whole package, signaled with <see cref="CorruptPackageException"/>.
+    /// Extracted to a non-iterator method because C# forbids yield inside try/catch.
+    /// </summary>
+    private ZipArchive OpenZipArchive(byte[] packageBytes)
+    {
+        ArgumentNullException.ThrowIfNull(packageBytes);
+
+        if (packageBytes.Length == 0)
+        {
+            _logger.LogError("El paquete está vacío (0 bytes): no existe un ZIP que abrir");
+            throw new CorruptPackageException(0,
+                "El paquete está vacío (0 bytes): el SAT no entregó contenido.");
+        }
+
+        try
+        {
+            return new ZipArchive(new MemoryStream(packageBytes), ZipArchiveMode.Read);
+        }
+        catch (InvalidDataException ex)
+        {
+            _logger.LogError(ex, "El paquete ZIP está corrupto ({PackageSize} bytes)", packageBytes.Length);
+            throw new CorruptPackageException(packageBytes.Length,
+                "El paquete ZIP está corrupto o no es un archivo ZIP válido.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Extracts the package zip converting an unreadable ZIP into <see cref="CorruptPackageException"/>.
+    /// </summary>
+    private void ExtractZipFileOrThrow(string fullFilePath, string extractToPath,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _storageService.ExtractZipFile(
+                fullFilePath: fullFilePath,
+                extractToPath: extractToPath,
+                logger: _logger,
+                cancellationToken: cancellationToken
+            );
+        }
+        catch (InvalidDataException ex)
+        {
+            long packageSize = 0;
+            try
+            {
+                packageSize = new FileInfo(fullFilePath).Length;
+            }
+            catch (Exception)
+            {
+                // best effort: the size is diagnostic only
+            }
+
+            _logger.LogError(ex, "El paquete ZIP {File} está corrupto ({PackageSize} bytes)",
+                fullFilePath, packageSize);
+            throw new CorruptPackageException(packageSize,
+                "El paquete ZIP está corrupto o no es un archivo ZIP válido.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Reads a single zip entry. A bad CRC or IO error on one entry yields a failed result
+    /// instead of killing the whole package.
+    /// </summary>
+    private static async Task<(string? Content, string? Error)> TryReadEntryAsync(ZipArchiveEntry entry,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var entryStream = entry.Open();
+            using var reader = new StreamReader(entryStream);
+            return (await reader.ReadToEndAsync(cancellationToken), null);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException)
+        {
+            return (null, $"No se pudo leer la entrada del ZIP: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Reads a file from disk protecting the enumeration from IO failures on a single file.
+    /// </summary>
+    private async Task<(string? Content, string? Error)> TryReadFileAsync(string filePath,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return (await _storageService.ReadFileContentAsync(filePath, cancellationToken, _logger), null);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return (null, $"No se pudo leer el archivo: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Parses one CFDI logging failures and warnings. Never throws.
+    /// </summary>
+    private ComprobanteResult ParseComprobante(string xml, string sourceName)
+    {
+        var result = ComprobanteParser.Parse(xml, sourceName);
+
+        if (!result.Succeeded)
+            _logger.LogWarning("CFDI ilegible en {Source}: {Error}", sourceName, result.ErrorMessage);
+        else if (result.Warnings.Count > 0)
+            _logger.LogWarning("CFDI {Source} con advertencias: {Warnings}",
+                sourceName, string.Join(" | ", result.Warnings));
+
+        return result;
+    }
+
+    /// <summary>
+    /// Parses the lines of a metadata .txt. Line 1 is the header; LineNumber is the physical
+    /// 1-based line within the file. Malformed lines yield failed results.
+    /// </summary>
+    private IEnumerable<MetaItemResult> ParseMetadataLines(string txtContent, string sourceName)
+    {
+        // Split WITHOUT removing empty entries so LineNumber matches the physical line.
+        var lines = txtContent.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+
+        // Skip the header line (first line contains column names)
+        for (var i = 1; i < lines.Length; i++)
+        {
+            var line = lines[i];
+
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            if (MetaItem.TryCreateFromString(line, out var metaItem, out var error))
+            {
+                metaItem!.Base64Content = line.EncodeToBase64();
+                yield return new MetaItemResult
+                {
+                    SourceName = sourceName,
+                    LineNumber = i + 1,
+                    MetaItem = metaItem,
+                    RawLine = line
+                };
+            }
+            else
+            {
+                _logger.LogWarning("Línea de metadata inválida en {Source} línea {Line}: {Error}",
+                    sourceName, i + 1, error);
+                yield return new MetaItemResult
+                {
+                    SourceName = sourceName,
+                    LineNumber = i + 1,
+                    RawLine = line,
+                    ErrorMessage = error
+                };
+            }
+        }
+    }
+
+    /// <summary>
+    /// Materializes the package bytes ONCE (base64 decode is expensive on SAT packages).
+    /// Invalid base64 is a terminal failure of the whole package.
+    /// </summary>
+    private static byte[] MaterializePackageBytes(DownloadResponse downloadResponse)
     {
         if (downloadResponse is null)
         {
             throw new ArgumentNullException(nameof(downloadResponse), "Download response cannot be null.");
         }
 
-        if (downloadResponse.PackageSize <= 0)
+        try
         {
-            throw new ArgumentException("Package size must be greater than zero.",
-                nameof(downloadResponse.PackageSize));
+            return downloadResponse.PackageBytes;
         }
-
-        if (downloadResponse.PackageBytes is null || downloadResponse.PackageBytes.Length == 0)
+        catch (FormatException ex)
         {
-            throw new ArgumentException("Package bytes cannot be null or empty.",
-                nameof(downloadResponse.PackageBytes));
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        await foreach (var metaItem in GetMetadataAsync(downloadResponse.PackageBytes, cancellationToken))
-        {
-            yield return metaItem;
+            throw new CorruptPackageException(0,
+                "El contenido de Base64Package no es base64 válido.", ex);
         }
     }
 
