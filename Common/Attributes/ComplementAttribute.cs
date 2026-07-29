@@ -16,8 +16,13 @@
 
 namespace Fiscalapi.XmlDownloader.Common.Attributes;
 
+/// <summary>
+/// Declara el namespace URI del complemento SAT que materializa la propiedad decorada.
+/// El match se hace por namespace (la única fuente de verdad del XML); el prefijo del
+/// elemento es decorativo y lo elige el emisor, por lo que no debe usarse para matchear.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class ComplementAttribute(string prefix) : Attribute
+public class ComplementAttribute(string namespaceUri) : Attribute
 {
-    public string Prefix { get; } = prefix;
+    public string NamespaceUri { get; } = namespaceUri;
 }

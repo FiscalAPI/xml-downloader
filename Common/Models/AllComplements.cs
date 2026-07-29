@@ -20,17 +20,24 @@ using Fiscalapi.XmlDownloader.Common.Models.Complements.Signature;
 
 namespace Fiscalapi.XmlDownloader.Common.Models;
 
+/// <summary>
+/// Complementos del CFDI materializados como objetos tipados. Solo se tipan TFD y Pagos 2.0;
+/// cualquier otro complemento (nómina, carta porte, comercio exterior, INE, Pagos 1.0 de los
+/// CFDI 3.3 — namespace http://www.sat.gob.mx/Pagos —, impuestos locales, etc.) viaja crudo
+/// como XmlElement en <c>Comprobante.Complemento.Any</c>: es responsabilidad del consumidor
+/// persistirlo si lo necesita. El match se hace por namespace URI del elemento.
+/// </summary>
 public class AllComplements
 {
     /// <summary>
     /// Complemento del comprobante que contiene el Timbre Fiscal Digital.
     /// </summary>
-    [Complement("tfd")]
+    [Complement("http://www.sat.gob.mx/TimbreFiscalDigital")]
     public TimbreFiscalDigital? TimbreFiscalDigital { get; set; }
 
     /// <summary>
     /// Complemento del comprobante con el complemento de pagos 2.0
     /// </summary>
-    [Complement("pago20")]
-    public Pagos Pago20 { get; set; }
+    [Complement("http://www.sat.gob.mx/Pagos20")]
+    public Pagos? Pago20 { get; set; }
 }

@@ -162,6 +162,44 @@ public static class DownloaderExtensions
             nameof(code));
     }
 
+    /// <summary>
+    /// Converts a string code to its corresponding enum element using the EnumCodeAttribute.
+    /// Unlike <see cref="ToEnumElement{TEnum}"/>, never throws: returns false when the code
+    /// is null or has no mapped enum member.
+    /// </summary>
+    /// <typeparam name="TEnum">Enum type</typeparam>
+    /// <param name="code">Enum code</param>
+    /// <param name="value">Enum element when found</param>
+    public static bool TryToEnumElement<TEnum>(this string? code, out TEnum value) where TEnum : struct, Enum
+    {
+        value = default;
+
+        if (code is null)
+            return false;
+
+        var type = typeof(TEnum);
+
+        var map = CodeToEnumCache.GetOrAdd(type, _ =>
+        {
+            return Enum.GetValues<TEnum>()
+                .Cast<Enum>()
+                .Select(e =>
+                {
+                    var memberInfo = type.GetMember(e.ToString()).FirstOrDefault();
+                    var attr = memberInfo?.GetCustomAttribute<EnumCodeAttribute>();
+                    return (Enum: e, attr?.Code);
+                })
+                .Where(x => x.Code != null)
+                .ToDictionary(x => x.Code!, x => (object)x.Enum);
+        });
+
+        if (!map.TryGetValue(code, out var found))
+            return false;
+
+        value = (TEnum)found;
+        return true;
+    }
+
 
     /// <summary>
     /// Adds Xml downloader services to the dependency injection container

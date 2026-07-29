@@ -48,22 +48,29 @@ public static class DownloadResponseService
              */
             var envelope = XmlSerializerService.Deserialize<DownloadEnvelope>(satResponse.RawResponse!);
 
-
-            // CodEstatus
-            var codEstatus = envelope?.Header?.HeaderResponse?.CodEstatus ?? "000";
-            var status = codEstatus.ToEnumElement<SatStatus>();
+            // CodEstatus: un código no mapeado (o header ausente) degrada a Unknown, nunca lanza;
+            // el código crudo se conserva en SatStatusCode para diagnóstico.
+            var codEstatus = envelope?.Header?.HeaderResponse?.CodEstatus;
+            var status = codEstatus is not null && codEstatus.TryToEnumElement<SatStatus>(out var parsedStatus)
+                ? parsedStatus
+                : SatStatus.Unknown;
 
             // Mensaje
             var mensaje = envelope?.Header?.HeaderResponse?.Mensaje ?? "";
 
+            // Éxito real = el SAT aceptó (CodEstatus 5000) Y entregó el paquete.
+            // HTTP 200 con CodEstatus distinto o <Paquete> vacío es un fallo de negocio:
+            // el consumidor no debe persistir y la solicitud sigue en polling.
+            var hasContent = !string.IsNullOrWhiteSpace(envelope?.Body?.BodyData?.Base64Package);
+            var satOk = status == SatStatus.RequestSucceeded;
 
             return new DownloadResponse
             {
-                Succeeded = true,
+                Succeeded = satOk && hasContent,
                 SatStatus = status,
-                SatStatusCode = codEstatus,
-                SatMessage = mensaje,
-                Base64Package = envelope?.Body.BodyData?.Base64Package,
+                SatStatusCode = codEstatus ?? "000",
+                SatMessage = hasContent ? mensaje : $"{mensaje} (sin contenido en <Paquete>)",
+                Base64Package = envelope?.Body?.BodyData?.Base64Package,
                 RawRequest = satResponse.RawRequest,
                 RawResponse = satResponse.RawResponse
             };

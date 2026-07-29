@@ -80,6 +80,8 @@ public class Comprobante
 
     private c_Exportacion exportacionField;
 
+    private bool exportacionFieldSpecified;
+
     private c_MetodoPago metodoPagoField;
 
     private bool metodoPagoFieldSpecified;
@@ -303,6 +305,19 @@ public class Comprobante
         set { exportacionField = value; }
     }
 
+    /// <summary>
+    /// Indica si el atributo Exportacion está presente. Al deserializar un CFDI 4.0 el
+    /// XmlSerializer lo establece en true automáticamente; en CFDIs 3.3 mapeados queda en
+    /// false (el atributo no existe en 3.3), lo que permite distinguir "no presente" del
+    /// valor default del enum.
+    /// </summary>
+    [XmlIgnore()]
+    public bool ExportacionSpecified
+    {
+        get { return exportacionFieldSpecified; }
+        set { exportacionFieldSpecified = value; }
+    }
+
     /// <remarks/>
     [XmlAttribute()]
     public c_MetodoPago MetodoPago
@@ -348,10 +363,20 @@ public class Comprobante
     [XmlIgnore]
     public string? Base64Content { get; set; }
 
-    public void DeserializeComplements()
-    {
-        if (Complemento?.Any == null) return;
+    [Obsolete("Use TryDeserializeComplements(); será eliminado en v7.")]
+    public void DeserializeComplements() => TryDeserializeComplements();
 
+    /// <summary>
+    /// Materializa en <see cref="AllComplements"/> los complementos con modelo tipado,
+    /// matcheando por namespace URI del elemento. Un complemento ilegible degrada a warning
+    /// y conserva su XML crudo en <c>Complemento.Any</c>; nunca lanza ni aborta el documento.
+    /// </summary>
+    /// <returns>Advertencias por complemento ilegible (lista vacía si no hubo problemas).</returns>
+    public List<string> TryDeserializeComplements()
+    {
+        var warnings = new List<string>();
+
+        if (Complemento?.Any == null) return warnings;
 
         var properties = typeof(AllComplements).GetProperties()
             .Where(p => p.GetCustomAttribute<ComplementAttribute>() != null)
@@ -360,14 +385,23 @@ public class Comprobante
         foreach (var element in Complemento.Any)
         {
             var targetProperty = properties.FirstOrDefault(p =>
-                p.GetCustomAttribute<ComplementAttribute>()?.Prefix == element.Prefix);
+                p.GetCustomAttribute<ComplementAttribute>()?.NamespaceUri == element.NamespaceURI);
 
             if (targetProperty == null) continue;
 
-            var serializer = new XmlSerializer(targetProperty.PropertyType);
-            using var reader = new StringReader(element.OuterXml);
-            var value = serializer.Deserialize(reader);
-            targetProperty.SetValue(AllComplements, value);
+            try
+            {
+                var serializer = new XmlSerializer(targetProperty.PropertyType);
+                using var reader = new StringReader(element.OuterXml);
+                var value = serializer.Deserialize(reader);
+                targetProperty.SetValue(AllComplements, value);
+            }
+            catch (Exception ex)
+            {
+                warnings.Add($"{element.NamespaceURI}: {ex.GetBaseException().Message}");
+            }
         }
+
+        return warnings;
     }
 }
