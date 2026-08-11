@@ -775,9 +775,11 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
 
 
     /// <summary>
-    /// Ensures that the authentication token and credential are not null.
+    /// Ensures that the authentication token exists, is still valid (SAT tokens live ~5 minutes),
+    /// and that the credential is not null.
     /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown when the authentication token or credential is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the authentication token is null,
+    /// expired, or the credential is null.</exception>
     private void EnsureAuthToken()
     {
         if (Token == null)
@@ -785,6 +787,15 @@ public class XmlDownloaderService : IXmlDownloaderService, IDisposable
             _logger.LogError("EnsureAuthToken failed: Token is null. Credential is null: {CredentialIsNull}",
                 Credential == null);
             throw new InvalidOperationException("Authentication token is required. Please authenticate first.");
+        }
+
+        if (!Token.IsValid)
+        {
+            // Sin este check la llamada sale al SAT con token muerto y el fallo regresa como
+            // CodEstatus 300 "Token invalido" dentro del sobre, mucho más difícil de diagnosticar.
+            _logger.LogError("EnsureAuthToken failed: Token expired. ValidTo: {ValidTo:O}", Token.ValidTo);
+            throw new InvalidOperationException(
+                $"El token SAT expiró el {Token.ValidTo:O}. Re-autentica antes de continuar.");
         }
 
         if (Credential == null)

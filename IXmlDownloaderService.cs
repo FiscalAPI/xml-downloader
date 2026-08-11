@@ -62,6 +62,12 @@ public interface IXmlDownloaderService
     /// <summary>
     /// Authenticates the user with SAT and retrieves an authentication token using the provided certificate and key in Base64 format.
     /// </summary>
+    /// <remarks>
+    /// Contrato: en fallo lógico del SAT (HTTP 500, CodEstatus de error) este método NO lanza
+    /// excepción; regresa <see cref="AuthResponse"/> con <c>Succeeded=false</c> y <c>Token</c> en
+    /// null. El llamador debe revisar <c>Succeeded</c> y <c>Token</c>. Solo los fallos de
+    /// transporte/parsing (HTTP, XML) se propagan como excepción.
+    /// </remarks>
     /// <param name="base64Cer">Base64 Fiel Certificate</param>
     /// <param name="base64Key">Base64 Fiel PrivateKey</param>
     /// <param name="password">Plain Fiel PrivateKey's Password Phrase</param>
@@ -73,6 +79,10 @@ public interface IXmlDownloaderService
     /// <summary>
     /// Authenticates the user with SAT and retrieves an authentication token given the Fiel credential.
     /// </summary>
+    /// <remarks>
+    /// Contrato: en fallo lógico del SAT NO lanza; regresa <c>Succeeded=false</c> con
+    /// <c>Token</c> en null. Revisa <c>Succeeded</c> antes de continuar.
+    /// </remarks>
     /// <param name="credential"></param>
     /// <param name="endpoints">Service endpoints to use for authentication. Defaults to CFDI endpoints if null.</param>
     /// <param name="cancellationToken"></param>
@@ -83,6 +93,10 @@ public interface IXmlDownloaderService
     /// <summary>
     /// Authenticates the user to CFDI endpoints with SAT and retrieves an authentication token given the Fiel credential.
     /// </summary>
+    /// <remarks>
+    /// Contrato: en fallo lógico del SAT NO lanza; regresa <c>Succeeded=false</c> con
+    /// <c>Token</c> en null. Revisa <c>Succeeded</c> antes de continuar.
+    /// </remarks>
     /// <param name="credential"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>AuthResponse</returns>

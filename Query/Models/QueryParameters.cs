@@ -71,16 +71,12 @@ public class QueryParameters
                 $"No se permite la descarga de CFDI | Metadatos en el servicio de retenciones.");
         }
 
-        // Check: No se permite la descarga de retenciones canceladas
-        if (RequestType == QueryType.Retenciones && InvoiceStatus == InvoiceStatus.Cancelado)
+        // Check: el SAT solo entrega documentos cancelados vía Metadata; como XML (CFDI o
+        // Retenciones) no existen, sin importar si la consulta es de emitidos o de recibidos.
+        if (InvoiceStatus == InvoiceStatus.Cancelado && RequestType != QueryType.Metadata)
         {
-            throw new InvalidOperationException($"No se permite la descarga de retenciones cancelados.");
-        }
-
-        // Check: No se permite la descarga de CFDI recibidos cancelados.
-        if (RequestType == QueryType.CFDI && RecipientTin is not null && InvoiceStatus == InvoiceStatus.Cancelado)
-        {
-            throw new InvalidOperationException($"No se permite la descarga de CFDI recibidos cancelados.");
+            throw new InvalidOperationException(
+                "Los documentos cancelados solo pueden descargarse como Metadata.");
         }
     }
 
