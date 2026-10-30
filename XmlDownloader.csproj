@@ -4,7 +4,7 @@
 	  <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	  <Version>6.0.1</Version>
+	  <Version>6.0.2</Version>
 	  <AssemblyVersion>$(Version)</AssemblyVersion>
 	  <FileVersion>$(Version)</FileVersion>
 	  <PackageVersion>$(Version)</PackageVersion>
