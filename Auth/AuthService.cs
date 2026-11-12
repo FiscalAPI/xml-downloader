@@ -106,7 +106,7 @@ public class AuthService : SatService, IAuthService
 
             return authResponse;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             logger.LogError(ex, "Error during SAT authentication process for RFC: {Rfc}", credential.Certificate.Rfc);
             throw;
