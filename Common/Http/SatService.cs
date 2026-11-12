@@ -60,7 +60,8 @@ public abstract class SatService : IDisposable
     /// <param name="payload">XML content to send</param>
     /// <param name="token">Authorization token</param>
     /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>SatResponse from server</returns>
+    /// <returns>SatResponse from server; a network failure or timeout comes back as an unsuccessful response</returns>
+    /// <exception cref="OperationCanceledException">The caller canceled <paramref name="cancellationToken"/>.</exception>
     protected async Task<SatResponse> SendRequestAsync(string url, string action, string payload,
         string? token = null, CancellationToken cancellationToken = default)
     {
@@ -98,6 +99,11 @@ public abstract class SatService : IDisposable
                 RawResponse = responseContent,
                 RawRequest = payload
             };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The caller canceled: it is not a SAT failure, so it must not look like one.
+            throw;
         }
         catch (Exception ex)
         {
